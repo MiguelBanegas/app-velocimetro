@@ -1,50 +1,216 @@
-# Welcome to your Expo app 👋
+# 🚗 App Velocímetro - Aplicación de Rastreo de Velocidad
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplicación móvil React Native para Android que rastrea la velocidad del usuario en tiempo real, proporciona alertas de velocidad configurables, registra estadísticas de conducción y visualiza recorridos en un mapa.
 
-## Get started
+## 📱 Características
 
-1. Install dependencies
+### Rastreo de Velocidad en Tiempo Real
+
+- **Velocímetro visual** con indicador circular grande y fácil de leer
+- **Alertas de velocidad** configurables con tres umbrales personalizables
+- **Alertas audibles** con diferentes tonos de beep seleccionables
+- **Rastreo en segundo plano** que continúa funcionando incluso con la pantalla apagada
+
+### Estadísticas de Conducción
+
+- **Tiempo de conducción** actualizado cada segundo
+- **Tiempo detenido** (cuando la velocidad es < 10 km/h)
+- **Velocidad máxima** alcanzada durante la sesión
+- **Distancia recorrida** calculada automáticamente
+- **Visualización de ruta** en mapa con polyline
+
+### Mapa Interactivo
+
+- **Zoom real del mapa** con controles +/- (niveles 10-18)
+- **Modo de navegación** con seguimiento automático de la ubicación
+- **Círculo de ubicación** de 500m de radio
+- **Visualización de ruta** en tiempo real
+- **Efecto de titilación** en el velocímetro cuando se supera la velocidad (5 segundos)
+
+### Historial de Sesiones
+
+- **Guardado automático** de cada sesión al finalizarla
+- **Visualización de mapas** del recorrido de sesiones pasadas
+- **Borrado individual** de sesiones con confirmación
+- **Estadísticas completas** por sesión (fecha, duración, velocidad máxima, distancia)
+
+### Configuración Personalizable
+
+- **Umbrales de velocidad** (3 niveles configurables)
+- **Intervalo de actualización GPS** (500ms a 5000ms)
+- **Selección de tono de beep** (3 tonos predefinidos + personalizado)
+- **Intervalo de alertas** configurable
+
+## 🛠️ Tecnologías Utilizadas
+
+- **React Native** con Expo
+- **TypeScript** para type safety
+- **React Native Maps** para visualización de mapas
+- **Expo Location** para rastreo GPS
+- **Expo Task Manager** para rastreo en segundo plano
+- **AsyncStorage** para persistencia de datos
+- **Expo AV** para alertas audibles
+
+## 📋 Requisitos Previos
+
+- Node.js (v14 o superior)
+- npm o yarn
+- Expo CLI
+- Android Studio (para desarrollo Android)
+- Dispositivo Android o emulador
+
+## 🚀 Instalación
+
+1. **Clonar el repositorio**
+
+   ```bash
+   git clone https://github.com/MiguelBanegas/app-velocimetro.git
+   cd app-velocimetro
+   ```
+
+2. **Instalar dependencias**
 
    ```bash
    npm install
    ```
 
-2. Start the app
+3. **Iniciar el servidor de desarrollo**
 
    ```bash
-   npx expo start
+   npm start
    ```
 
-In the output, you'll find options to open the app in a
+4. **Ejecutar en Android**
+   ```bash
+   npm run android
+   ```
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## 📦 Compilar APK
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+Para generar un APK de producción:
 
 ```bash
-npm run reset-project
+cd android
+./gradlew assembleRelease
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+El APK se generará en: `android/app/build/outputs/apk/release/app-release.apk`
 
-## Learn more
+## 🎯 Uso
 
-To learn more about developing your project with Expo, look at the following resources:
+### Pantalla Principal (Home)
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+1. Presiona el botón **Play** para iniciar el rastreo
+2. El velocímetro mostrará tu velocidad actual
+3. Las estadísticas se actualizarán en tiempo real
+4. Presiona **Pause** para detener temporalmente
+5. Presiona **Finalizar** para terminar y guardar la sesión
 
-## Join the community
+### Pantalla de Mapa
 
-Join our community of developers creating universal apps.
+1. Visualiza tu ubicación y ruta en tiempo real
+2. Usa los botones **+/-** para acercar/alejar el mapa
+3. Activa el **modo de navegación** para seguimiento automático
+4. Presiona **🏁** para finalizar la sesión
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### Pantalla de Historial
+
+1. Ve todas tus sesiones guardadas
+2. Presiona **Ver Mapa** para visualizar el recorrido de una sesión
+3. Presiona **Borrar** para eliminar una sesión específica
+4. Usa **BORRAR TODO EL HISTORIAL** para limpiar todo
+
+### Configuración
+
+1. Ajusta los **umbrales de velocidad** (km/h)
+2. Selecciona el **tono de beep** preferido
+3. Configura el **intervalo de actualización GPS**
+4. Ajusta el **intervalo de alertas**
+
+## 📂 Estructura del Proyecto
+
+```
+app-velocidad/
+├── app/                      # Pantallas de la aplicación
+│   ├── (tabs)/
+│   │   ├── index.tsx        # Pantalla principal (Home)
+│   │   ├── map.tsx          # Pantalla de mapa
+│   │   ├── explore.tsx      # Pantalla de historial
+│   │   └── settings.tsx     # Pantalla de configuración
+├── src/
+│   ├── services/            # Servicios de la aplicación
+│   │   ├── LocationService.ts
+│   │   ├── DrivingStatsService.ts
+│   │   ├── AlertService.ts
+│   │   ├── BackgroundTasks.ts
+│   │   └── SettingsService.ts
+│   ├── hooks/               # Custom hooks
+│   │   └── useSpeedTracker.ts
+│   └── types/               # Definiciones de tipos TypeScript
+│       └── types.ts
+├── assets/                  # Recursos (imágenes, sonidos)
+│   └── sounds/             # Archivos de audio para alertas
+└── components/             # Componentes reutilizables
+```
+
+## 🔧 Configuración de Permisos
+
+La aplicación requiere los siguientes permisos en Android:
+
+- **ACCESS_FINE_LOCATION** - Para rastreo GPS preciso
+- **ACCESS_COARSE_LOCATION** - Para ubicación aproximada
+- **FOREGROUND_SERVICE** - Para rastreo en segundo plano
+- **ACCESS_BACKGROUND_LOCATION** - Para rastreo con pantalla apagada
+
+Estos permisos se solicitan automáticamente al usuario al iniciar el rastreo.
+
+## 🎨 Características de UI/UX
+
+- **Velocímetro grande** (120x120px) con número de 56px para fácil lectura
+- **Colores dinámicos** según la velocidad:
+  - Azul: velocidad normal
+  - Naranja: primer umbral superado
+  - Rojo: segundo umbral superado
+  - Rojo oscuro: tercer umbral superado
+- **Efecto de titilación** de 5 segundos cuando se supera la velocidad
+- **Botones bien posicionados** para fácil acceso durante la conducción
+- **Confirmaciones** para acciones destructivas (borrar sesiones)
+
+## 📝 Notas Importantes
+
+- El rastreo GPS funciona mejor en exteriores con buena señal
+- El rastreo en segundo plano consume batería
+- Las estadísticas se guardan automáticamente cada segundo
+- El historial se limita a 50 sesiones más recientes
+- La distancia se calcula usando la fórmula de Haversine
+
+## 🤝 Contribuciones
+
+Las contribuciones son bienvenidas. Por favor:
+
+1. Fork el proyecto
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+## 📄 Licencia
+
+Este proyecto es de código abierto y está disponible bajo la licencia MIT.
+
+## 👤 Autor
+
+**Miguel Banegas**
+
+- GitHub: [@MiguelBanegas](https://github.com/MiguelBanegas)
+
+## 🙏 Agradecimientos
+
+- Expo team por el excelente framework
+- React Native Maps por la integración de mapas
+- Comunidad de React Native por el soporte
+
+---
+
+**Versión:** 1.0.0  
+**Última actualización:** Enero 2026
