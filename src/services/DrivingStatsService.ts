@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { DrivingStats, HistoryItem } from "../types/types";
+import { calculateDistanceKm } from "../utils/geo";
 
 const STATS_STORAGE_KEY = "@driving_stats";
 const HISTORY_STORAGE_KEY = "@history_stats";
@@ -187,7 +188,7 @@ class DrivingStatsServiceClass {
         for (let i = 0; i < this.stats.routePoints.length - 1; i++) {
           const p1 = this.stats.routePoints[i];
           const p2 = this.stats.routePoints[i + 1];
-          distance += this.calculateDistance(
+          distance += calculateDistanceKm(
             p1.latitude,
             p1.longitude,
             p2.latitude,
@@ -215,26 +216,6 @@ class DrivingStatsServiceClass {
     } catch (e) {
       console.error("Error saving session to history:", e);
     }
-  }
-
-  // Haversine formula copied for internal use or we could move it to a util
-  private calculateDistance(
-    lat1: number,
-    lon1: number,
-    lat2: number,
-    lon2: number,
-  ) {
-    const R = 6371; // Earth's radius in km
-    const dLat = (lat2 - lat1) * (Math.PI / 180);
-    const dLon = (lon2 - lon1) * (Math.PI / 180);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * (Math.PI / 180)) *
-        Math.cos(lat2 * (Math.PI / 180)) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
   }
 
   async clearHistory() {

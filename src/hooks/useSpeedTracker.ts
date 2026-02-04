@@ -43,7 +43,24 @@ export const useSpeedTracker = () => {
   }, []);
 
   useEffect(() => {
+    const loadSettings = async () => {
+      const s = await SettingsService.getSettings();
+      setSettings(s);
+      await refreshOdometers();
+    };
+
+    loadSettings().catch((err) => {
+      console.error("Error loading settings:", err);
+    });
+  }, [refreshOdometers]);
+
+  useEffect(() => {
     let subscription: Location.LocationSubscription | null = null;
+
+    if (!isTracking) {
+      setSpeed(0);
+      return;
+    }
 
     const startWatching = async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -51,10 +68,6 @@ export const useSpeedTracker = () => {
         setErrorMsg("Permiso de ubicación denegado");
         return;
       }
-
-      const s = await SettingsService.getSettings();
-      setSettings(s);
-      await refreshOdometers();
 
       subscription = await Location.watchPositionAsync(
         {
@@ -90,7 +103,7 @@ export const useSpeedTracker = () => {
         subscription.remove();
       }
     };
-  }, [refreshOdometers]);
+  }, [isTracking, refreshOdometers]);
 
   // Efecto para actualizar el cronómetro cada segundo si el rastreo está activo
   useEffect(() => {

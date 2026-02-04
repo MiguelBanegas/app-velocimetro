@@ -6,8 +6,9 @@ import {
 import { AlertState } from "../types/types";
 import { AlertService } from "./AlertService";
 import { DrivingStatsService } from "./DrivingStatsService";
-import { LocationService, msToKmh } from "./LocationService";
+import { msToKmh } from "./LocationService";
 import { SettingsService } from "./SettingsService";
+import { calculateDistanceKm } from "../utils/geo";
 
 let lastLocation: { latitude: number; longitude: number } | null = null;
 
@@ -76,7 +77,7 @@ TaskManager.defineTask(
 
         // 3. Cálculo de Odómetros
         if (lastLocation) {
-          const distanceKm = LocationService.calculateDistance(
+          const distanceKm = calculateDistanceKm(
             lastLocation.latitude,
             lastLocation.longitude,
             latitude,
