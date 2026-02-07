@@ -79,4 +79,51 @@ export const SettingsService = {
       return 0;
     }
   },
+  // User/device helpers
+  getUserId: async () => {
+    try {
+      const v = await AsyncStorage.getItem(STORAGE_KEYS.USER_ID);
+      return v != null ? parseInt(v, 10) : 0;
+    } catch (e) {
+      console.error("Error reading user id", e);
+      return 0;
+    }
+  },
+
+  setUserId: async (id: number) => {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.USER_ID, id.toString());
+      return true;
+    } catch (e) {
+      console.error("Error saving user id", e);
+      return false;
+    }
+  },
+
+  getDeviceId: async () => {
+    try {
+      const v = await AsyncStorage.getItem(STORAGE_KEYS.DEVICE_ID);
+      if (v != null && v.length > 0) return v;
+      const generated =
+        "gps-" +
+        Date.now().toString(36) +
+        "-" +
+        Math.random().toString(36).slice(2, 8);
+      await AsyncStorage.setItem(STORAGE_KEYS.DEVICE_ID, generated);
+      return generated;
+    } catch (e) {
+      console.error("Error reading device id", e);
+      return "unknown";
+    }
+  },
+
+  setDeviceId: async (id: string) => {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.DEVICE_ID, id);
+      return true;
+    } catch (e) {
+      console.error("Error saving device id", e);
+      return false;
+    }
+  },
 };

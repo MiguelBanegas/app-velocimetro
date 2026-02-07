@@ -1,10 +1,12 @@
 import * as TaskManager from "expo-task-manager";
 import {
-    BACKGROUND_TRACKING_TASK,
-    MAX_ALERT_REPEATS,
+  BACKGROUND_DEVICE_TRACKING_TASK,
+  BACKGROUND_TRACKING_TASK,
+  MAX_ALERT_REPEATS,
 } from "../constants/Settings";
 import { AlertState } from "../types/types";
 import { AlertService } from "./AlertService";
+import { DeviceLocationService } from "./DeviceLocationService";
 import { DrivingStatsService } from "./DrivingStatsService";
 import { msToKmh } from "./LocationService";
 import { SettingsService } from "./SettingsService";
@@ -73,6 +75,13 @@ TaskManager.defineTask(
           latitude,
           longitude,
           speed: speedKmh,
+        });
+
+        // 2.1. Reporte aproximado cada 1 minuto
+        await DeviceLocationService.sendIfDue({
+          latitude,
+          longitude,
+          recordedAt: Date.now(),
         });
 
         // 3. Cálculo de Odómetros
@@ -155,6 +164,33 @@ TaskManager.defineTask(
             });
           }
         }
+      }
+    }
+  },
+);
+
+TaskManager.defineTask(
+  BACKGROUND_DEVICE_TRACKING_TASK,
+  async ({ data, error }: any) => {
+    if (error) {
+      console.error("Device Task Error:", error);
+      return;
+    }
+
+    if (data) {
+      const { locations } = data;
+      const location = locations[0];
+
+      if (location && location.coords) {
+        const { latitude, longitude } = location.coords;
+        await DeviceLocationService.sendIfDue({
+          latitude,
+          longitude,
+          recordedAt:
+            typeof location.timestamp === "number"
+              ? location.timestamp
+              : Date.now(),
+        });
       }
     }
   },

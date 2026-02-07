@@ -2,7 +2,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { DrivingStatsService } from "@/src/services/DrivingStatsService";
-import { HistoryItem } from "@/src/types/types";
+import { HistoryItem, RoutePoint } from "@/src/types/types";
 import React, { useEffect, useState } from "react";
 import {
     Alert,
@@ -13,7 +13,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import MapView, { Polyline } from "react-native-maps";
+import MapView, { Callout, Marker, Polyline } from "react-native-maps";
 
 const formatDuration = (seconds: number) => {
   const hrs = Math.floor(seconds / 3600);
@@ -36,6 +36,7 @@ export default function HistoryScreen() {
   const [selectedSession, setSelectedSession] = useState<HistoryItem | null>(
     null,
   );
+  const [selectedPoint, setSelectedPoint] = useState<RoutePoint | null>(null);
   const [showMapModal, setShowMapModal] = useState(false);
 
   const loadHistory = async () => {
@@ -74,6 +75,7 @@ export default function HistoryScreen() {
 
   const handleViewMap = (item: HistoryItem) => {
     setSelectedSession(item);
+    setSelectedPoint(item.routePoints[item.routePoints.length - 1] ?? null);
     setShowMapModal(true);
   };
 
@@ -156,12 +158,20 @@ export default function HistoryScreen() {
       <Modal
         visible={showMapModal}
         animationType="slide"
-        onRequestClose={() => setShowMapModal(false)}
+        onRequestClose={() => {
+          setShowMapModal(false);
+          setSelectedPoint(null);
+        }}
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalHeader}>
             <ThemedText type="title">Recorrido de la Sesión</ThemedText>
-            <TouchableOpacity onPress={() => setShowMapModal(false)}>
+            <TouchableOpacity
+              onPress={() => {
+                setShowMapModal(false);
+                setSelectedPoint(null);
+              }}
+            >
               <IconSymbol name="xmark.circle.fill" size={30} color="#666" />
             </TouchableOpacity>
           </View>
@@ -176,13 +186,60 @@ export default function HistoryScreen() {
                   latitudeDelta: 0.05,
                   longitudeDelta: 0.05,
                 }}
+                onPress={() => setSelectedPoint(null)}
               >
                 <Polyline
                   coordinates={selectedSession.routePoints}
                   strokeColor="#2196F3"
                   strokeWidth={5}
                 />
+                {selectedSession.routePoints.map((p, idx) => (
+                  <Marker
+                    key={`pt-${idx}`}
+                    coordinate={{
+                      latitude: p.latitude,
+                      longitude: p.longitude,
+                    }}
+                    tracksViewChanges={false}
+                    onPress={() => setSelectedPoint(p)}
+                  >
+                    <Callout tooltip={false}>
+                      <View style={styles.callout}>
+                        <Text style={styles.calloutTitle}>{`${Math.round(
+                          p.speed || 0,
+                        )} km/h`}</Text>
+                        <Text style={styles.calloutSubtitle}>
+                          {formatDate(p.timestamp || 0)}
+                        </Text>
+                      </View>
+                    </Callout>
+                  </Marker>
+                ))}
               </MapView>
+
+              {selectedPoint && (
+                <View style={styles.pointStats}>
+                  <View style={styles.pointStatItem}>
+                    <Text style={styles.pointStatLabel}>Velocidad</Text>
+                    <Text style={styles.pointStatValue}>
+                      {Math.round(selectedPoint.speed || 0)} km/h
+                    </Text>
+                  </View>
+                  <View style={styles.pointStatItem}>
+                    <Text style={styles.pointStatLabel}>Fecha</Text>
+                    <Text style={styles.pointStatValue}>
+                      {formatDate(selectedPoint.timestamp || 0)}
+                    </Text>
+                  </View>
+                  <View style={styles.pointStatItem}>
+                    <Text style={styles.pointStatLabel}>Coords</Text>
+                    <Text style={styles.pointStatValue}>
+                      {selectedPoint.latitude.toFixed(5)},{" "}
+                      {selectedPoint.longitude.toFixed(5)}
+                    </Text>
+                  </View>
+                </View>
+              )}
 
               <View style={styles.modalStats}>
                 <View style={styles.modalStatItem}>
@@ -385,6 +442,31 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#eee",
   },
+  pointStats: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    backgroundColor: "#fff7e6",
+    borderTopWidth: 1,
+    borderTopColor: "#ffe3b3",
+  },
+  pointStatItem: {
+    alignItems: "center",
+    flex: 1,
+  },
+  pointStatLabel: {
+    fontSize: 10,
+    color: "#a66a00",
+    textTransform: "uppercase",
+    marginBottom: 4,
+  },
+  pointStatValue: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: "#6b4b00",
+    textAlign: "center",
+  },
   modalStatItem: {
     alignItems: "center",
   },
@@ -398,5 +480,34 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "bold",
     color: "#333",
+  },
+  markerLabel: {
+    backgroundColor: "rgba(0,0,0,0.6)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  markerText: {
+    color: "#fff",
+    fontSize: 10,
+    fontWeight: "600",
+  },
+  callout: {
+    backgroundColor: "#fff",
+    padding: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#eee",
+    minWidth: 120,
+  },
+  calloutTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#333",
+  },
+  calloutSubtitle: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 4,
   },
 });

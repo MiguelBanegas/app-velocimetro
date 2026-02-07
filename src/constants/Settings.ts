@@ -12,6 +12,13 @@ export const STORAGE_KEYS = {
   SETTINGS: "user_settings",
   ODOMETER_1: "odometer_1",
   ODOMETER_2: "odometer_2",
+  USER_ID: "user_id",
+  DEVICE_ID: "device_id",
+  DEVICE_LAST_SENT: "device_last_sent_at",
+  DEVICE_LAST_LAT: "device_last_lat",
+  DEVICE_LAST_LON: "device_last_lon",
+  FAILED_SENDS: "failed_sends",
 };
 
 export const BACKGROUND_TRACKING_TASK = "BACKGROUND_SPEED_TRACKING";
+export const BACKGROUND_DEVICE_TRACKING_TASK = "BACKGROUND_DEVICE_TRACKING";

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { DrivingStatsService } from "../services/DrivingStatsService";
 import { msToKmh } from "../services/LocationService";
 import { SettingsService } from "../services/SettingsService";
+import { DeviceLocationService } from "../services/DeviceLocationService";
 import { Settings } from "../types/types";
 
 export const useSpeedTracker = () => {
@@ -13,6 +14,7 @@ export const useSpeedTracker = () => {
   const [isTracking, setIsTracking] = useState(false);
   const [drivingTime, setDrivingTime] = useState<number>(0);
   const [stoppedTime, setStoppedTime] = useState<number>(0);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [settings, setSettings] = useState<Settings | null>(null);
 
   const refreshOdometers = useCallback(async () => {
@@ -35,6 +37,7 @@ export const useSpeedTracker = () => {
     const unsubscribe = DrivingStatsService.subscribe(() => {
       const stats = DrivingStatsService.getStats();
       setIsTracking(stats.isBackgroundTracking);
+      setIsSyncing(!!(stats as any).isSyncing);
       setDrivingTime(stats.drivingTime);
       setStoppedTime(stats.stoppedTime);
     });
@@ -88,6 +91,12 @@ export const useSpeedTracker = () => {
             latitude: location.coords.latitude,
             longitude: location.coords.longitude,
             speed: s,
+          });
+
+          DeviceLocationService.sendIfDue({
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+            recordedAt: Date.now(),
           });
 
           // Refrescar odómetros y estadísticas periódicamente
@@ -146,6 +155,7 @@ export const useSpeedTracker = () => {
     odometer2,
     errorMsg,
     isTracking,
+    isSyncing,
     resetOdometer,
     refreshOdometers,
     drivingTime,
