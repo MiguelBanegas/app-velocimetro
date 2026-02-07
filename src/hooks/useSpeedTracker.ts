@@ -93,12 +93,6 @@ export const useSpeedTracker = () => {
             speed: s,
           });
 
-          DeviceLocationService.sendIfDue({
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
-            recordedAt: Date.now(),
-          });
-
           // Refrescar odómetros y estadísticas periódicamente
           refreshOdometers();
         },
