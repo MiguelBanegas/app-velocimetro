@@ -7,6 +7,7 @@ import { SettingsService } from "./SettingsService";
 const STATS_STORAGE_KEY = "@driving_stats";
 const HISTORY_STORAGE_KEY = "@history_stats";
 const MIN_MOVE_DEG = 1e-5; // ~1.1m lat diff, simple filter
+const MIN_MOVE_KM = 0.01; // 10m jitter filter for distance calc
 
 class DrivingStatsServiceClass {
   private stats: DrivingStats = {
@@ -240,7 +241,7 @@ class DrivingStatsServiceClass {
         timestamp: typeof p.timestamp === "number" ? p.timestamp : Date.now(),
         speed: typeof p.speed === "number" ? Number(p.speed.toFixed(1)) : 0,
         altitude: typeof p.altitude === "number" ? p.altitude : null,
-      }));
+      })).sort((a, b) => a.timestamp - b.timestamp);
 
       // Calcular distancia acumulada basada en normalizedPoints
       let distance = 0;
@@ -248,12 +249,15 @@ class DrivingStatsServiceClass {
         for (let i = 0; i < normalizedPoints.length - 1; i++) {
           const p1 = normalizedPoints[i];
           const p2 = normalizedPoints[i + 1];
-          distance += calculateDistanceKm(
+          const segmentKm = calculateDistanceKm(
             p1.latitude,
             p1.longitude,
             p2.latitude,
             p2.longitude,
           );
+          if (segmentKm >= MIN_MOVE_KM) {
+            distance += segmentKm;
+          }
         }
       }
 
