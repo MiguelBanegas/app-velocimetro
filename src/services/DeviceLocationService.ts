@@ -3,7 +3,7 @@ import { STORAGE_KEYS } from "../constants/Settings";
 import { postDeviceLocation } from "./ApiService";
 import { SettingsService } from "./SettingsService";
 
-const REPORT_INTERVAL_MS = 60_000;
+const REPORT_INTERVAL_MS = 30_000;
 const MIN_MOVE_DEG = 1e-5; // ~1.1m lat diff, simple filter
 
 let inFlight = false;

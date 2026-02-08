@@ -37,7 +37,7 @@ export const DeviceTrackingService = {
 
     await Location.startLocationUpdatesAsync(BACKGROUND_DEVICE_TRACKING_TASK, {
       accuracy: Location.Accuracy.Balanced,
-      timeInterval: 60_000,
+      timeInterval: 30_000,
       distanceInterval: 0,
       showsBackgroundLocationIndicator: false,
       foregroundService: {
