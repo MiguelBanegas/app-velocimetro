@@ -9,6 +9,7 @@ import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useEffect } from "react";
+import { AppState } from "react-native";
 import "../src/services/BackgroundTasks";
 import { DeviceTrackingService } from "../src/services/DeviceTrackingService";
 import { SettingsService } from "../src/services/SettingsService";
@@ -25,6 +26,14 @@ export default function RootLayout() {
     SettingsService.getDeviceId().catch(() => {});
     // Iniciar rastreo de dispositivo (independiente del rastreo de sesión)
     DeviceTrackingService.startTracking().catch(() => {});
+
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state === "active") {
+        DeviceTrackingService.startTracking().catch(() => {});
+      }
+    });
+
+    return () => sub.remove();
   }, []);
 
   return (
