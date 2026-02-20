@@ -33,17 +33,27 @@ export const DeviceTrackingService = {
     const isRunning = await Location.hasStartedLocationUpdatesAsync(
       BACKGROUND_DEVICE_TRACKING_TASK,
     );
-    if (isRunning) return;
 
+    const { LogService } = require("./LogService");
+    LogService.setTag("LOC");
+
+    if (isRunning) {
+      LogService.log("INFO", "Localizador ya está corriendo");
+      return;
+    }
+
+    LogService.log("INFO", "Iniciando Localizador Permanente");
     await Location.startLocationUpdatesAsync(BACKGROUND_DEVICE_TRACKING_TASK, {
       accuracy: Location.Accuracy.Balanced,
-      timeInterval: 30_000,
+      timeInterval: 60_000,
       distanceInterval: 0,
-      showsBackgroundLocationIndicator: false,
+      pausesUpdatesAutomatically: false,
+      // Indispensable para que Android no mate el proceso
       foregroundService: {
-        notificationTitle: "Rastreo del dispositivo activo",
-        notificationBody: "Enviando ubicación aproximada cada 1 minuto",
-        notificationColor: "#0a7ea4",
+        notificationTitle: "Localizador Activo",
+        notificationBody: "Reportando posición en segundo plano",
+        notificationColor: "#FF0000",
+        killServiceOnDestroy: false,
       },
     });
   },

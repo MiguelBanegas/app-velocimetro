@@ -1,0 +1,85 @@
+Google WiFi geolocation failed: request to https://www.googleapis.com/geolocation/v1/geolocate?key=AIzaSyAESNgmZ2O6nu3S0z3h8LU8oC67-nPbxhw failed, reason: getaddrinfo ENOTFOUND www.googleapis.com
+Unwired WiFi geolocation failed: request to https://us1.unwiredlabs.com/v2/process.php failed, reason: getaddrinfo ENOTFOUND us1.unwiredlabs.com
+Mozilla WiFi geolocation failed: request to https://location.services.mozilla.com/v1/geolocate?key=test failed, reason: getaddrinfo ENOTFOUND location.services.mozilla.com
+WiFi geolocation failed: All WiFi geolocation services failed
+Google WiFi geolocation failed: request to https://www.googleapis.com/geolocation/v1/geolocate?key=AIzaSyAESNgmZ2O6nu3S0z3h8LU8oC67-nPbxhw failed, reason: getaddrinfo ENOTFOUND www.googleapis.com
+Unwired WiFi geolocation failed: request to https://us1.unwiredlabs.com/v2/process.php failed, reason: getaddrinfo ENOTFOUND us1.unwiredlabs.com
+Mozilla WiFi geolocation failed: request to https://location.services.mozilla.com/v1/geolocate?key=test failed, reason: getaddrinfo ENOTFOUND location.services.mozilla.com
+WiFi geolocation failed: All WiFi geolocation services failed
+Error getting location by IP: Could not get the public IP address
+Fallback geolocation also failed: request to http://ip-api.com/json/ failed, reason: getaddrinfo ENOTFOUND ip-api.com
+No location available
+Google WiFi geolocation failed: request to https://www.googleapis.com/geolocation/v1/geolocate?key=AIzaSyAESNgmZ2O6nu3S0z3h8LU8oC67-nPbxhw failed, reason: getaddrinfo ENOTFOUND www.googleapis.com
+Unwired WiFi geolocation failed: request to https://us1.unwiredlabs.com/v2/process.php failed, reason: getaddrinfo ENOTFOUND us1.unwiredlabs.com
+Mozilla WiFi geolocation failed: request to https://location.services.mozilla.com/v1/geolocate?key=test failed, reason: getaddrinfo ENOTFOUND location.services.mozilla.com
+WiFi geolocation failed: All WiFi geolocation services failed
+Error getting location by IP: Could not get the public IP address
+Fallback geolocation also failed: request to http://ip-api.com/json/ failed, reason: getaddrinfo ENOTFOUND ip-api.com
+No location available
+Google WiFi geolocation failed: request to https://www.googleapis.com/geolocation/v1/geolocate?key=AIzaSyAESNgmZ2O6nu3S0z3h8LU8oC67-nPbxhw failed, reason: getaddrinfo ENOTFOUND www.googleapis.com
+Unwired WiFi geolocation failed: request to https://us1.unwiredlabs.com/v2/process.php failed, reason: getaddrinfo ENOTFOUND us1.unwiredlabs.com
+Mozilla WiFi geolocation failed: request to https://location.services.mozilla.com/v1/geolocate?key=test failed, reason: getaddrinfo ENOTFOUND location.services.mozilla.com
+WiFi geolocation failed: All WiFi geolocation services failed
+Error getting location by IP: Could not get the public IP address
+Fallback geolocation also failed: request to http://ip-api.com/json/ failed, reason: getaddrinfo ENOTFOUND ip-api.com
+No location available
+Google WiFi geolocation failed: request to https://www.googleapis.com/geolocation/v1/geolocate?key=AIzaSyAESNgmZ2O6nu3S0z3h8LU8oC67-nPbxhw failed, reason: getaddrinfo ENOTFOUND www.googleapis.com
+Unwired WiFi geolocation failed: request to https://us1.unwiredlabs.com/v2/process.php failed, reason: getaddrinfo ENOTFOUND us1.unwiredlabs.com
+Mozilla WiFi geolocation failed: request to https://location.services.mozilla.com/v1/geolocate?key=test failed, reason: getaddrinfo ENOTFOUND location.services.mozilla.com
+WiFi geolocation failed: All WiFi geolocation services failed
+Error getting location by IP: Could not get the public IP address
+Fallback geolocation also failed: network timeout at: http://ip-api.com/json/
+No location available
+Google WiFi geolocation failed: request to https://www.googleapis.com/geolocation/v1/geolocate?key=AIzaSyAESNgmZ2O6nu3S0z3h8LU8oC67-nPbxhw failed, reason: getaddrinfo ENOTFOUND www.googleapis.com
+Unwired WiFi geolocation failed: request to https://us1.unwiredlabs.com/v2/process.php failed, reason: getaddrinfo ENOTFOUND us1.unwiredlabs.com
+Mozilla WiFi geolocation failed: request to https://location.services.mozilla.com/v1/geolocate?key=test failed, reason: getaddrinfo ENOTFOUND location.services.mozilla.com
+WiFi geolocation failed: All WiFi geolocation services failed
+Error getting location by IP: request to https://ipapi.co/186.57.177.103/json/ failed, reason: getaddrinfo ENOTFOUND ipapi.co
+Fallback geolocation also failed: request to http://ip-api.com/json/ failed, reason: getaddrinfo ENOTFOUND ip-api.com
+No location available
+Error getting location by IP: IP geolocation service returned 429
+WiFi geolocation failed: Command failed: netsh wlan show networks mode=Bssid
+
+Error getting location by IP: Could not get the public IP address
+Fallback geolocation also failed: request to http://ip-api.com/json/ failed, reason: getaddrinfo ENOTFOUND ip-api.com
+No location available
+WiFi geolocation failed: Command failed: netsh wlan show networks mode=Bssid
+
+Error getting location by IP: Could not get the public IP address
+Fallback geolocation also failed: request to http://ip-api.com/json/ failed, reason: getaddrinfo ENOTFOUND ip-api.com
+No location available
+WiFi geolocation failed: Command failed: netsh wlan show networks mode=Bssid
+
+Error getting location by IP: Could not get the public IP address
+Fallback geolocation also failed: request to http://ip-api.com/json/ failed, reason: getaddrinfo ENOTFOUND ip-api.com
+No location available
+WiFi geolocation failed: Command failed: netsh wlan show networks mode=Bssid
+
+Error getting location by IP: Could not get the public IP address
+Fallback geolocation also failed: request to http://ip-api.com/json/ failed, reason: getaddrinfo ENOTFOUND ip-api.com
+No location available
+WiFi geolocation failed: Command failed: netsh wlan show networks mode=Bssid
+
+Error getting location by IP: Could not get the public IP address
+Fallback geolocation also failed: request to http://ip-api.com/json/ failed, reason: getaddrinfo ENOTFOUND ip-api.com
+No location available
+WiFi geolocation failed: Command failed: netsh wlan show networks mode=Bssid
+
+Error getting location by IP: Could not get the public IP address
+Fallback geolocation also failed: request to http://ip-api.com/json/ failed, reason: getaddrinfo ENOTFOUND ip-api.com
+No location available
+WiFi geolocation failed: Command failed: netsh wlan show networks mode=Bssid
+
+Error getting location by IP: Could not get the public IP address
+Fallback geolocation also failed: request to http://ip-api.com/json/ failed, reason: getaddrinfo ENOTFOUND ip-api.com
+No location available
+WiFi geolocation failed: Command failed: netsh wlan show networks mode=Bssid
+
+Error getting location by IP: Could not get the public IP address
+Fallback geolocation also failed: request to http://ip-api.com/json/ failed, reason: getaddrinfo ENOTFOUND ip-api.com
+No location available
+WiFi geolocation failed: Command failed: netsh wlan show networks mode=Bssid
+
+Error getting location by IP: Could not get the public IP address
+Fallback geolocation also failed: request to http://ip-api.com/json/ failed, reason: getaddrinfo ENOTFOUND ip-api.com
+No location available

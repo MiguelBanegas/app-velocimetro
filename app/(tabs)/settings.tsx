@@ -2,13 +2,16 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { DEFAULT_SETTINGS } from "@/src/constants/Settings";
 import { AlertService } from "@/src/services/AlertService";
+import { LogService } from "@/src/services/LogService";
 import { SettingsService } from "@/src/services/SettingsService";
+import * as Clipboard from "expo-clipboard";
 import * as DocumentPicker from "expo-document-picker";
 import React, { useEffect, useState } from "react";
 import {
     Alert,
     ScrollView,
     StyleSheet,
+    Switch,
     TextInput,
     TouchableOpacity,
     View,
@@ -36,6 +39,10 @@ export default function SettingsScreen() {
   const [customBeepName, setCustomBeepName] = useState<string | undefined>(
     undefined,
   );
+  const [userId, setUserId] = useState<string>("0");
+  const [deviceId, setDeviceId] = useState<string>("android_test");
+  const [isLocatorEnabled, setIsLocatorEnabled] = useState<boolean>(true);
+  const [logs, setLogs] = useState<string>("");
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -50,8 +57,17 @@ export default function SettingsScreen() {
         setUpdateInterval((settings.updateInterval / 1000).toString());
         setBeepTone(settings.beepTone);
         setCustomBeepUri(settings.customBeepUri);
+        setIsLocatorEnabled(settings.isLocatorEnabled !== false); // Default true
         if (settings.customBeepUri) {
           setCustomBeepName("Tono personalizado");
+        }
+        try {
+          const uid = await SettingsService.getUserId();
+          setUserId(uid ? uid.toString() : "0");
+          const did = await SettingsService.getDeviceId();
+          setDeviceId(did || "android_test");
+        } catch (e) {
+          // ignore
         }
       } catch (err) {
         console.error("Error loading settings:", err);
@@ -95,7 +111,17 @@ export default function SettingsScreen() {
       beepTone: beepTone,
       customBeepUri: customBeepUri,
       unit: "km/h",
+      isLocatorEnabled: isLocatorEnabled,
     });
+
+    // save user/device
+    try {
+      const parsed = parseInt(userId, 10);
+      await SettingsService.setUserId(isNaN(parsed) ? 0 : parsed);
+      await SettingsService.setDeviceId(deviceId || "android_test");
+    } catch (e) {
+      console.warn("Error saving user/device ids", e);
+    }
 
     if (success) {
       Alert.alert(
@@ -126,6 +152,27 @@ export default function SettingsScreen() {
   const clearCustomBeep = () => {
     setCustomBeepUri(undefined);
     setCustomBeepName(undefined);
+  };
+
+  const copyLogs = async () => {
+    try {
+      const formattedLogs = await LogService.getFormattedLogs();
+      await Clipboard.setStringAsync(formattedLogs);
+      Alert.alert("Copiado", "Los logs han sido copiados al portapapeles.");
+    } catch (e) {
+      Alert.alert("Error", "No se pudieron copiar los logs.");
+    }
+  };
+
+  const clearLogs = async () => {
+    await LogService.clearLogs();
+    setLogs("");
+    Alert.alert("Limpio", "Historial de logs borrado.");
+  };
+
+  const refreshLogs = async () => {
+    const formattedLogs = await LogService.getFormattedLogs();
+    setLogs(formattedLogs.slice(0, 2000));
   };
 
   return (
@@ -175,31 +222,80 @@ export default function SettingsScreen() {
 
         <View style={styles.section}>
           <ThemedText type="defaultSemiBold">
-            Intervalo entre Alertas (segundos)
+            Intervalos de GPS y Alertas
+          </ThemedText>
+          <ThemedText style={styles.helpText}>
+            Frecuencia de las alertas y actualización de posición
+          </ThemedText>
+          <View style={styles.thresholdsRow}>
+            <View style={styles.inputContainer}>
+              <ThemedText style={styles.inputLabel}>Alertas (seg)</ThemedText>
+              <TextInput
+                style={styles.smallInput}
+                keyboardType="numeric"
+                value={alertInterval}
+                onChangeText={setAlertInterval}
+                placeholder="10"
+              />
+            </View>
+            <View style={styles.inputContainer}>
+              <ThemedText style={styles.inputLabel}>GPS (seg)</ThemedText>
+              <TextInput
+                style={styles.smallInput}
+                keyboardType="numeric"
+                value={updateInterval}
+                onChangeText={setUpdateInterval}
+                placeholder="1"
+              />
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <ThemedText type="defaultSemiBold">Identificación (Local)</ThemedText>
+          <ThemedText style={styles.helpText}>
+            Identificadores para el historial de rutas local
+          </ThemedText>
+          <ThemedText style={[styles.inputLabel, { marginTop: 10 }]}>
+            User ID
           </ThemedText>
           <TextInput
             style={styles.input}
             keyboardType="numeric"
-            value={alertInterval}
-            onChangeText={setAlertInterval}
-            placeholder="Ej. 10"
+            value={userId}
+            onChangeText={setUserId}
+            placeholder="Ej. 2"
+          />
+
+          <ThemedText style={[styles.inputLabel, { marginTop: 10 }]}>
+            Device ID
+          </ThemedText>
+          <TextInput
+            style={styles.input}
+            value={deviceId}
+            onChangeText={setDeviceId}
+            placeholder="android_test"
           />
         </View>
 
         <View style={styles.section}>
-          <ThemedText type="defaultSemiBold">
-            Intervalo de Actualización GPS (segundos)
-          </ThemedText>
-          <ThemedText style={styles.helpText}>
-            Menor intervalo = más responsivo pero mayor consumo de batería
-          </ThemedText>
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            value={updateInterval}
-            onChangeText={setUpdateInterval}
-            placeholder="Ej. 1"
-          />
+          <View style={styles.rowBetween}>
+            <View style={{ flex: 1 }}>
+              <ThemedText type="defaultSemiBold">
+                Localizador Permanente
+              </ThemedText>
+              <ThemedText style={styles.helpText}>
+                Enviar ubicación cada 1 minuto aunque no haya un recorrido
+                activo.
+              </ThemedText>
+            </View>
+            <Switch
+              value={isLocatorEnabled}
+              onValueChange={setIsLocatorEnabled}
+              trackColor={{ false: "#767577", true: "#81b0ff" }}
+              thumbColor={isLocatorEnabled ? "#0a7ea4" : "#f4f3f4"}
+            />
+          </View>
         </View>
 
         <View style={styles.section}>
@@ -238,7 +334,7 @@ export default function SettingsScreen() {
           </View>
 
           <ThemedText type="defaultSemiBold" style={[styles.mt20, styles.mb10]}>
-            O usar un archivo de audio propio:
+            Archivo de audio personalizado:
           </ThemedText>
           <View style={styles.customAudioContainer}>
             <TouchableOpacity
@@ -259,7 +355,9 @@ export default function SettingsScreen() {
                     style={styles.previewButtonSmall}
                     onPress={() => AlertService.playBeep()}
                   >
-                    <ThemedText>▶️ Prueba</ThemedText>
+                    <ThemedText style={styles.previewTextSmall}>
+                      ▶️ Prueba
+                    </ThemedText>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.clearButton}
@@ -273,14 +371,39 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.button} onPress={saveSettings}>
-          <ThemedText style={styles.buttonText}>GUARDAR</ThemedText>
-        </TouchableOpacity>
+        <View style={styles.section}>
+          <ThemedText type="defaultSemiBold">Diagnóstico y Logs</ThemedText>
+          <ThemedText style={styles.helpText}>
+            Útil para depurar errores de rastreo
+          </ThemedText>
+          <View style={styles.logsActions}>
+            <TouchableOpacity style={styles.logButton} onPress={refreshLogs}>
+              <ThemedText style={styles.logButtonText}>
+                Ver Recientes
+              </ThemedText>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.logButton} onPress={copyLogs}>
+              <ThemedText style={styles.logButtonText}>Copiar Todo</ThemedText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.logButton, { backgroundColor: "#888" }]}
+              onPress={clearLogs}
+            >
+              <ThemedText style={styles.logButtonText}>Limpiar</ThemedText>
+            </TouchableOpacity>
+          </View>
+          {logs ? (
+            <View style={styles.logsView}>
+              <ThemedText style={styles.logsContent}>{logs}</ThemedText>
+            </View>
+          ) : null}
+        </View>
 
-        <ThemedText style={styles.note}>
-          Nota: Los cambios se aplicarán a la siguiente actualización de
-          velocidad.
-        </ThemedText>
+        <TouchableOpacity style={styles.button} onPress={saveSettings}>
+          <ThemedText style={styles.buttonText}>
+            GUARDAR CONFIGURACIÓN
+          </ThemedText>
+        </TouchableOpacity>
       </ScrollView>
     </ThemedView>
   );
@@ -300,6 +423,14 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 30,
+    backgroundColor: "rgba(0,0,0,0.03)",
+    padding: 15,
+    borderRadius: 12,
+  },
+  rowBetween: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   thresholdsRow: {
     flexDirection: "row",
@@ -312,7 +443,6 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 12,
     marginBottom: 5,
-    textAlign: "center",
     opacity: 0.7,
   },
   smallInput: {
@@ -332,44 +462,39 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     borderRadius: 8,
     paddingHorizontal: 15,
-    marginTop: 10,
-    fontSize: 18,
+    marginTop: 5,
+    fontSize: 16,
     color: "#000",
     backgroundColor: "#fff",
   },
   button: {
     backgroundColor: "#0a7ea4",
-    padding: 15,
-    borderRadius: 8,
+    padding: 18,
+    borderRadius: 12,
     alignItems: "center",
-    marginTop: 20,
+    marginTop: 10,
+    marginBottom: 40,
   },
   buttonText: {
     color: "#fff",
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
-  },
-  note: {
-    marginTop: 30,
-    fontSize: 12,
-    opacity: 0.6,
-    textAlign: "center",
   },
   helpText: {
     fontSize: 12,
     opacity: 0.6,
-    marginTop: 5,
+    marginTop: 2,
   },
   beepSelector: {
     marginTop: 10,
-    gap: 10,
+    gap: 8,
   },
   beepOption: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 15,
-    borderWidth: 2,
+    padding: 12,
+    borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,
     backgroundColor: "#fff",
@@ -379,18 +504,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#e6f4f8",
   },
   beepOptionText: {
-    fontSize: 16,
-    fontWeight: "500",
+    fontSize: 14,
   },
   previewButton: {
     backgroundColor: "#0a7ea4",
-    paddingVertical: 8,
-    paddingHorizontal: 15,
+    padding: 8,
     borderRadius: 6,
   },
   previewText: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: 14,
   },
   mt20: {
     marginTop: 20,
@@ -399,15 +522,10 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   customAudioContainer: {
-    backgroundColor: "#f9f9f9",
-    padding: 15,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#eee",
-    borderStyle: "dashed",
+    marginTop: 5,
   },
   pickerButton: {
-    backgroundColor: "#888",
+    backgroundColor: "#666",
     padding: 12,
     borderRadius: 8,
     alignItems: "center",
@@ -415,19 +533,20 @@ const styles = StyleSheet.create({
   pickerButtonText: {
     color: "#fff",
     fontWeight: "bold",
+    fontSize: 14,
   },
   customAudioInfo: {
-    marginTop: 15,
-    padding: 10,
+    marginTop: 10,
+    padding: 12,
     backgroundColor: "#fff",
-    borderRadius: 6,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#e0e0e0",
+    borderColor: "#eee",
   },
   audioName: {
-    fontSize: 14,
-    marginBottom: 10,
-    color: "#444",
+    fontSize: 13,
+    marginBottom: 8,
+    color: "#333",
   },
   audioActions: {
     flexDirection: "row",
@@ -435,17 +554,48 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   previewButtonSmall: {
-    backgroundColor: "#e6f4f8",
+    backgroundColor: "#0a7ea4",
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 4,
-    borderWidth: 1,
-    borderColor: "#0a7ea4",
+  },
+  previewTextSmall: {
+    color: "#fff",
+    fontSize: 12,
   },
   clearButton: {
-    padding: 5,
+    padding: 4,
   },
   clearButtonText: {
-    fontSize: 18,
+    fontSize: 16,
+  },
+  logsActions: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 10,
+  },
+  logButton: {
+    flex: 1,
+    backgroundColor: "#444",
+    padding: 10,
+    borderRadius: 6,
+    alignItems: "center",
+  },
+  logButtonText: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "bold",
+  },
+  logsView: {
+    marginTop: 15,
+    padding: 10,
+    backgroundColor: "#1a1a1a",
+    borderRadius: 8,
+    maxHeight: 200,
+  },
+  logsContent: {
+    color: "#0f0",
+    fontFamily: "monospace",
+    fontSize: 10,
   },
 });

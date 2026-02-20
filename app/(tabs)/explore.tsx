@@ -3,6 +3,8 @@ import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { DrivingStatsService } from "@/src/services/DrivingStatsService";
 import { HistoryItem, RoutePoint } from "@/src/types/types";
+import * as FileSystem from "expo-file-system/legacy";
+import * as Sharing from "expo-sharing";
 import React, { useEffect, useState } from "react";
 import {
     Alert,
@@ -38,6 +40,7 @@ export default function HistoryScreen() {
   );
   const [selectedPoint, setSelectedPoint] = useState<RoutePoint | null>(null);
   const [showMapModal, setShowMapModal] = useState(false);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
 
   const loadHistory = async () => {
     setLoading(true);
@@ -79,6 +82,40 @@ export default function HistoryScreen() {
     setShowMapModal(true);
   };
 
+  const handleShareSession = async (item: HistoryItem) => {
+    try {
+      const fileName = `recorrido_${item.id}.json`;
+      const baseDir = FileSystem.cacheDirectory;
+
+      if (!baseDir) {
+        throw new Error(
+          "El sistema de archivos no está listo o no es compatible con este dispositivo.",
+        );
+      }
+
+      const fileUri = baseDir.endsWith("/")
+        ? baseDir + fileName
+        : `${baseDir}/${fileName}`;
+
+      await FileSystem.writeAsStringAsync(
+        fileUri,
+        JSON.stringify(item, null, 2),
+      );
+
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(fileUri);
+      } else {
+        Alert.alert(
+          "Error",
+          "La función de compartir no está disponible en este dispositivo.",
+        );
+      }
+    } catch (error: any) {
+      console.error("Error sharing session:", error);
+      Alert.alert("Error", `Ocurrió un problema: ${error.message}`);
+    }
+  };
+
   const renderItem = ({ item }: { item: HistoryItem }) => (
     <View style={styles.historyCard}>
       <View style={styles.cardHeader}>
@@ -104,6 +141,11 @@ export default function HistoryScreen() {
             {formatDuration(item.stoppedTime)}
           </Text>
         </View>
+        <View style={styles.statSeparator} />
+        <View style={styles.statItem}>
+          <Text style={styles.statLabel}>Distancia</Text>
+          <Text style={styles.statValue}>{item.distance.toFixed(1)} km</Text>
+        </View>
       </View>
 
       <View style={styles.cardActions}>
@@ -112,15 +154,24 @@ export default function HistoryScreen() {
             style={styles.actionButton}
             onPress={() => handleViewMap(item)}
           >
-            <IconSymbol name="map" size={16} color="#0a7ea4" />
-            <Text style={styles.actionButtonText}>Ver Mapa</Text>
+            <IconSymbol name="map" size={14} color="#0a7ea4" />
+            <Text style={styles.actionButtonText}>Mapa</Text>
           </TouchableOpacity>
         )}
+
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => handleShareSession(item)}
+        >
+          <IconSymbol name="square.and.arrow.up" size={14} color="#0a7ea4" />
+          <Text style={styles.actionButtonText}>Compartir</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity
           style={[styles.actionButton, styles.deleteButton]}
           onPress={() => handleDeleteSession(item)}
         >
-          <IconSymbol name="trash" size={16} color="#ff4444" />
+          <IconSymbol name="trash" size={14} color="#ff4444" />
           <Text style={[styles.actionButtonText, styles.deleteButtonText]}>
             Borrar
           </Text>
@@ -417,6 +468,12 @@ const styles = StyleSheet.create({
   },
   deleteButtonText: {
     color: "#ff4444",
+  },
+  disabledButton: {
+    backgroundColor: "#f5f5f5",
+  },
+  disabledButtonText: {
+    color: "#999",
   },
   modalContainer: {
     flex: 1,

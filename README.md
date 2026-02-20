@@ -214,3 +214,31 @@ Este proyecto es de código abierto y está disponible bajo la licencia MIT.
 
 **Versión:** 1.0.0  
 **Última actualización:** Enero 2026
+
+## 🔗 Integración con API remota
+
+La app puede enviar sesiones de rastreo a la API en https://api.appvelocidad.mabcontrol.ar utilizando los siguientes endpoints:
+
+- Health: `GET /health` — devuelve `{ "ok": true }`.
+- Iniciar track: `POST /tracks/start` — body: `{ "user_id": number, "device_id": string }` → respuesta `{ "track_id": number }`.
+- Enviar puntos (batch): `POST /tracks/points` — body: `{ "track_id": number, "points": [{ "lat": number, "lon": number, "speed": number }] }` → respuesta `{ "inserted": number }`.
+- Finalizar track: `POST /tracks/:id/stop` — ejemplo `POST /tracks/1/stop` → respuesta `{ "status": "stopped", "track": { ... } }`.
+
+Encabezados: `Content-Type: application/json`. Actualmente la API no requiere autenticación.
+
+Comportamiento en la app:
+
+- Al finalizar una sesión la app realiza el flujo `startTrack` → `postPoints` → `stopTrack` automáticamente.
+- Si una petición falla, se reintenta internamente hasta 3 veces con backoff. Si sigue fallando, la petición se encola en `AsyncStorage` (`STORAGE_KEYS.FAILED_SENDS`) y se reintentará más tarde con `drainQueue()`.
+- `user_id` y `device_id` se pueden configurar desde la pantalla de Configuración (Settings).
+
+Archivos relevantes:
+
+- `src/services/ApiService.ts` — funciones `startTrack`, `postPoints`, `stopTrack`, `drainQueue`.
+- `src/services/DrivingStatsService.ts` — integra el flujo de envío al finalizar sesiones y guarda `remoteTrackId` en el historial.
+- `src/services/SettingsService.ts` — getters/setters para `user_id` y `device_id`.
+
+Recomendaciones:
+
+- Configurar `user_id` y `device_id` en la pantalla de Configuración antes de usar el envío automático.
+- Considerar exponer el estado de la cola de envíos fallidos en la UI para depuración.

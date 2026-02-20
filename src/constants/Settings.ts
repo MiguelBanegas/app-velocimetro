@@ -4,6 +4,7 @@ export const DEFAULT_SETTINGS = {
   unit: "km/h",
   beepTone: "beep1" as "beep1" | "beep2" | "beep3",
   updateInterval: 1000, // ms (1 second) - Intervalo de actualización GPS
+  isLocatorEnabled: true,
 };
 
 export const MAX_ALERT_REPEATS = 2; // Número máximo de repeticiones por nivel

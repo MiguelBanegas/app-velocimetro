@@ -1,5 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { useKeepAwake } from "expo-keep-awake";
 import React, { useEffect } from "react";
 import {
     ScrollView,
@@ -19,6 +20,7 @@ import Animated, {
 import { useSpeedTracker } from "../../src/hooks/useSpeedTracker";
 import { DrivingStatsService } from "../../src/services/DrivingStatsService";
 import { LocationService } from "../../src/services/LocationService";
+import { LogService } from "../../src/services/LogService";
 
 const formatDuration = (seconds: number) => {
   const hrs = Math.floor(seconds / 3600);
@@ -39,8 +41,15 @@ export default function HomeScreen() {
     resetStoppedTime,
     stoppedTime,
     isTracking,
+    isSyncing,
     settings,
+    userId,
+    deviceId,
+    queueCount,
   } = useSpeedTracker();
+
+  // Mantiene la pantalla encendida si isTracking es true
+  useKeepAwake();
 
   // Valores animados para colores y pulsación
   const alertLevel = useSharedValue(0); // 0: normal, 1: bajo, 2: medio, 3: alto
@@ -108,39 +117,47 @@ export default function HomeScreen() {
     };
   });
 
-  useEffect(() => {
-    const {
-      activateKeepAwakeAsync,
-      deactivateKeepAwake,
-    } = require("expo-keep-awake");
-    if (isTracking) {
-      activateKeepAwakeAsync();
-    } else {
-      deactivateKeepAwake();
-    }
-  }, [isTracking]);
-
   const toggleTracking = async () => {
-    if (isTracking) {
-      await LocationService.stopTracking();
-      DrivingStatsService.pauseSession();
-    } else {
-      try {
+    if (isSyncing) return;
+
+    try {
+      if (isTracking) {
+        LogService.log("INFO", "Click Finalizar Rastreo");
+        await LocationService.stopTracking();
+        await DrivingStatsService.stopSession();
+      } else {
+        LogService.log("INFO", "Click Iniciar Rastreo");
         await LocationService.startTracking();
-        DrivingStatsService.startSession();
-      } catch (e: any) {
-        alert(e.message);
+        await DrivingStatsService.startSession();
       }
+    } catch (e: any) {
+      LogService.log("ERROR", "Fallo en toggleTracking", e.message);
+      console.error("Fallo en toggleTracking:", e);
     }
   };
 
   return (
     <ThemedView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.headerInfo}>
+          <View style={styles.idInfo}>
+            <Text style={styles.idInfoText}>ID Usuario: {userId}</Text>
+            <Text style={styles.idInfoText}>Dispositivo: {deviceId}</Text>
+          </View>
+          <View
+            style={[
+              styles.statusIndicator,
+              queueCount > 0 ? styles.statusPending : styles.statusOk,
+            ]}
+          >
+            <Text style={styles.statusText}>
+              {queueCount > 0 ? `Pendientes: ${queueCount}` : "✓ Sincronizado"}
+            </Text>
+          </View>
+        </View>
+
         <Animated.View style={[styles.speedCircle, animatedCircleStyle]}>
-          <ThemedText type="defaultSemiBold" style={styles.speedLabel}>
-            VELOCIDAD
-          </ThemedText>
+          <ThemedText style={styles.speedLabel}>VELOCIDAD ACTUAL</ThemedText>
           <Text style={styles.speedValue}>{Math.floor(speed)}</Text>
           <ThemedText type="defaultSemiBold" style={styles.speedUnit}>
             KM/H
@@ -225,7 +242,7 @@ export default function HomeScreen() {
           onPress={toggleTracking}
         >
           <Text style={styles.buttonText}>
-            {isTracking ? "DETENER RASTREO" : "INICIAR RASTREO"}
+            {isTracking ? "FINALIZAR" : "INICIAR RASTREO"}
           </Text>
         </TouchableOpacity>
 
@@ -245,8 +262,43 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     alignItems: "center",
-    paddingVertical: 40,
+    paddingVertical: 20,
     paddingHorizontal: 20,
+  },
+  headerInfo: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+    marginBottom: 20,
+    paddingHorizontal: 10,
+    backgroundColor: "rgba(0,0,0,0.05)",
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  idInfo: {
+    flex: 0.6,
+  },
+  idInfoText: {
+    fontSize: 10,
+    color: "#666",
+    fontWeight: "bold",
+  },
+  statusIndicator: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  statusOk: {
+    backgroundColor: "#e8f5e9",
+  },
+  statusPending: {
+    backgroundColor: "#fff3e0",
+  },
+  statusText: {
+    fontSize: 10,
+    fontWeight: "bold",
+    color: "#333",
   },
   speedCircle: {
     width: 260,
@@ -257,7 +309,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 30,
-    backgroundColor: "rgba(10, 126, 164, 0.8)", // Más opaco para contraste con blanco
+    backgroundColor: "rgba(10, 126, 164, 0.8)",
   },
   speedLabel: {
     fontSize: 14,
@@ -267,7 +319,7 @@ const styles = StyleSheet.create({
   speedValue: {
     fontSize: 110,
     fontWeight: "bold",
-    color: "#fff", // Blanco para mejor contraste
+    color: "#fff",
   },
   speedUnit: {
     fontSize: 18,
@@ -278,7 +330,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     width: "100%",
-    marginBottom: 30,
+    marginBottom: 20,
   },
   odometerBox: {
     flex: 0.48,
@@ -289,114 +341,112 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   odoLabel: {
-    fontSize: 12,
-    color: "#444",
+    fontSize: 10,
+    marginBottom: 5,
+    opacity: 0.7,
   },
   odoValue: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "bold",
     color: "#333",
     marginVertical: 5,
   },
-  resetButton: {
-    backgroundColor: "#888",
-    paddingVertical: 5,
-    paddingHorizontal: 15,
-    borderRadius: 10,
-    marginTop: 5,
-  },
-  resetText: {
-    color: "#fff",
-    fontSize: 10,
-    fontWeight: "bold",
-  },
   statsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
     width: "100%",
-    marginBottom: 30,
+    marginBottom: 20,
   },
   statBox: {
-    flex: 0.48,
-    backgroundColor: "#e8f4f8",
+    backgroundColor: "#f0f0f0",
     borderRadius: 15,
     padding: 15,
     alignItems: "center",
     elevation: 2,
-    borderWidth: 1,
-    borderColor: "#0a7ea4",
   },
   statLabel: {
-    fontSize: 11,
-    color: "#0a7ea4",
-    textAlign: "center",
+    fontSize: 10,
+    marginBottom: 5,
+    opacity: 0.7,
   },
   statValue: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: "bold",
-    color: "#0a7ea4",
-    marginVertical: 5,
+    color: "#333",
   },
   statUnit: {
     fontSize: 12,
-    color: "#0a7ea4",
+    opacity: 0.6,
   },
   stoppedContainer: {
     width: "100%",
-    marginBottom: 30,
+    marginBottom: 25,
   },
   stoppedBox: {
-    backgroundColor: "#fff4e6",
+    backgroundColor: "#f9f9f9",
     borderRadius: 15,
     padding: 15,
     alignItems: "center",
-    elevation: 2,
-    borderWidth: 2,
-    borderColor: "#ff9800",
+    borderWidth: 1,
+    borderColor: "#eee",
   },
   stoppedLabel: {
     fontSize: 11,
-    color: "#ff9800",
-    textAlign: "center",
-    fontWeight: "bold",
+    marginBottom: 5,
+    color: "#666",
   },
   stoppedValue: {
     fontSize: 32,
     fontWeight: "bold",
-    color: "#ff9800",
-    marginVertical: 5,
+    color: "#888",
   },
   stoppedUnit: {
     fontSize: 12,
-    color: "#ff9800",
+    opacity: 0.5,
   },
-  errorText: {
-    color: "red",
-    marginBottom: 20,
+  resetButton: {
+    marginTop: 10,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    backgroundColor: "#ccc",
+    borderRadius: 5,
+  },
+  resetText: {
+    fontSize: 9,
+    fontWeight: "bold",
+    color: "#555",
   },
   button: {
-    paddingVertical: 15,
-    paddingHorizontal: 40,
-    borderRadius: 30,
-    marginBottom: 20,
-    elevation: 3,
-    width: "80%",
+    width: "100%",
+    padding: 20,
+    borderRadius: 15,
     alignItems: "center",
+    marginBottom: 15,
+    elevation: 4,
   },
   buttonStart: {
     backgroundColor: "#0a7ea4",
   },
   buttonStop: {
-    backgroundColor: "#ff4444",
+    backgroundColor: "#b71c1c",
+  },
+  buttonDisabled: {
+    backgroundColor: "#999",
   },
   buttonText: {
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
+    letterSpacing: 1,
   },
   infoText: {
+    fontSize: 12,
+    opacity: 0.6,
     textAlign: "center",
-    opacity: 0.7,
-    marginTop: 10,
+    marginBottom: 40,
+  },
+  errorText: {
+    color: "#f44336",
+    marginBottom: 15,
+    textAlign: "center",
+    fontWeight: "bold",
   },
 });

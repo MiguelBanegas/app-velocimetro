@@ -4,6 +4,7 @@ import { useSpeedTracker } from "@/src/hooks/useSpeedTracker";
 import { DrivingStatsService } from "@/src/services/DrivingStatsService";
 import { LocationService } from "@/src/services/LocationService";
 import { RoutePoint } from "@/src/types/types";
+import { useKeepAwake } from "expo-keep-awake";
 import React, { useEffect, useRef, useState } from "react";
 import {
     Alert,
@@ -22,8 +23,9 @@ const formatDuration = (seconds: number) => {
 };
 
 export default function MapScreen() {
-  const { speed, drivingTime, stoppedTime, settings, isTracking } =
+  const { speed, drivingTime, stoppedTime, settings, isTracking, isSyncing } =
     useSpeedTracker();
+  useKeepAwake();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
 
@@ -48,19 +50,7 @@ export default function MapScreen() {
     return () => unsubscribe();
   }, []);
 
-  const toggleTracking = async () => {
-    if (isTracking) {
-      await LocationService.stopTracking();
-      DrivingStatsService.pauseSession();
-    } else {
-      try {
-        await LocationService.startTracking();
-        DrivingStatsService.startSession();
-      } catch (e: any) {
-        alert(e.message);
-      }
-    }
-  };
+  // Toggle tracking is now handled only from the home screen
 
   const endTrip = () => {
     Alert.alert(
@@ -267,14 +257,7 @@ export default function MapScreen() {
           />
         </TouchableOpacity>
 
-        {(isTracking || routePoints.length > 0) && (
-          <TouchableOpacity
-            style={[styles.miniFab, styles.finishFab]}
-            onPress={endTrip}
-          >
-            <Text style={{ fontSize: 20 }}>🏁</Text>
-          </TouchableOpacity>
-        )}
+        {/* Finish button removed; session now starts/stops with the play/pause FAB */}
       </View>
 
       {/* Panel Superior de Tiempos */}
@@ -289,17 +272,7 @@ export default function MapScreen() {
         </View>
       </View>
 
-      {/* Botón de Rastreo Flotante */}
-      <TouchableOpacity
-        style={[styles.fab, isTracking ? styles.fabStop : styles.fabStart]}
-        onPress={toggleTracking}
-      >
-        <IconSymbol
-          name={isTracking ? "pause.fill" : "play.fill"}
-          size={30}
-          color="#fff"
-        />
-      </TouchableOpacity>
+      {/* Tracking control moved to home screen only */}
     </ThemedView>
   );
 }

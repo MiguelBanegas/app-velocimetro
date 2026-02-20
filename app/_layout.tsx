@@ -9,10 +9,8 @@ import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useEffect } from "react";
-import { AppState } from "react-native";
 import "../src/services/BackgroundTasks";
-import { DeviceTrackingService } from "../src/services/DeviceTrackingService";
-import { SettingsService } from "../src/services/SettingsService";
+import { LogService } from "../src/services/LogService";
 
 export const unstable_settings = {
   anchor: "(tabs)",
@@ -22,18 +20,25 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   useEffect(() => {
-    // Asegurar device_id desde el primer arranque
-    SettingsService.getDeviceId().catch(() => {});
-    // Iniciar rastreo de dispositivo (independiente del rastreo de sesión)
-    DeviceTrackingService.startTracking().catch(() => {});
+    LogService.setTag("UI");
+    LogService.log("INFO", "App BOOT", "v1.0.0");
 
-    const sub = AppState.addEventListener("change", (state) => {
-      if (state === "active") {
-        DeviceTrackingService.startTracking().catch(() => {});
+    // Auto-iniciar Localizador si está habilitado
+    const initLocator = async () => {
+      try {
+        const { SettingsService } = require("../src/services/SettingsService");
+        const {
+          DeviceTrackingService,
+        } = require("../src/services/DeviceTrackingService");
+        const settings = await SettingsService.getSettings();
+        if (settings.isLocatorEnabled) {
+          await DeviceTrackingService.startTracking();
+        }
+      } catch (e) {
+        console.error("Error auto-starting locator:", e);
       }
-    });
-
-    return () => sub.remove();
+    };
+    initLocator();
   }, []);
 
   return (
