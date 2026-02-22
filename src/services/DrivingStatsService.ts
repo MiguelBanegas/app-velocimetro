@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { DrivingStats, HistoryItem } from "../types/types";
 import { calculateDistanceKm } from "../utils/geo";
-import { postPoints, startTrack, stopTrack } from "./ApiService";
+import { startTrack, stopTrack } from "./ApiService";
 import { LogService } from "./LogService";
 import { SettingsService } from "./SettingsService";
 
@@ -384,26 +384,9 @@ class DrivingStatsServiceClass {
           this.stats.routePoints.slice(-MAX_ROUTE_POINTS);
       }
 
-      // Enviar punto a la API si hay un track activo
-      if (this.currentRemoteTrackId !== null) {
-        postPoints(this.currentRemoteTrackId, [
-          {
-            lat: point.latitude,
-            lon: point.longitude,
-            speed: Number(speed.toFixed(1)),
-            altitude: point.altitude ? Number(point.altitude.toFixed(1)) : null,
-          },
-        ]).catch((e) => {
-          // Error ya logueado en ApiService
-        });
-      } else {
-        // Loguear solo de vez en cuando para no saturar si no hay track
-        if (Math.random() > 0.95) {
-          LogService.log(
-            "DEBUG",
-            "Punto registrado localmente (sin track remoto)",
-          );
-        }
+      // No enviamos puntos en vivo: se guardan localmente para ver/subir el recorrido luego.
+      if (Math.random() > 0.97) {
+        LogService.log("DEBUG", "Punto registrado localmente");
       }
     }
 

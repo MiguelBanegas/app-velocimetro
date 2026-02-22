@@ -229,6 +229,15 @@ async function drainQueue() {
     if (!raw) return;
 
     let arr: QueueEntry[] = JSON.parse(raw);
+    const droppedPostPoints = arr.filter((entry) => entry.action === "postPoints").length;
+    if (droppedPostPoints > 0) {
+      arr = arr.filter((entry) => entry.action !== "postPoints");
+      LogService.log(
+        "INFO",
+        "Cola: descartando puntos en vivo",
+        `${droppedPostPoints} items postPoints removidos`,
+      );
+    }
     if (arr.length === 0) return;
 
     LogService.log(

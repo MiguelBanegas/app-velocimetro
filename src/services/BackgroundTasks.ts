@@ -28,11 +28,15 @@ let lastKnownLon = 0;
 let lastMovementTimestamp = Date.now();
 let isTaskRunningBG = false;
 let isTaskRunningLOC = false;
-let lastDeviceReportTime = 0; // Local lock for both tasks
+let lastDeviceReportTimeBG = 0; // Lock local solo para BG
+let lastDeviceReportTimeLOC = 0; // Lock local solo para LOC
+let lastLocatorDiagLogBG = 0;
+let lastLocatorDiagLogLOC = 0;
 
 const DEVICE_MOVE_THRESHOLD_KM = 0.02; // 20m
 const DEVICE_MOVING_REPORT_MS = 60_000; // 1 min
 const DEVICE_STATIONARY_REPORT_MS = 600_000; // 10 min
+const LOCATOR_DIAG_LOG_MS = 120_000; // 2 min
 
 // Estado de alertas por cada nivel de velocidad
 const alertStates: Map<number, AlertState> = new Map();
@@ -131,9 +135,7 @@ TaskManager.defineTask(
 
           if (settings.isLocatorEnabled) {
             // LOCK LOCAL: Evitar que ráfagas de eventos del OS disparen ráfagas de reportes
-            if (now - lastDeviceReportTime >= 55_000) {
-              lastDeviceReportTime = now; // Bloqueo inmediato
-
+            if (now - lastDeviceReportTimeBG >= 55_000) {
               const lastSentAtStr = await AsyncStorage.getItem(
                 STORAGE_KEYS.DEVICE_LAST_SENT,
               );
@@ -166,6 +168,7 @@ TaskManager.defineTask(
                 elapsedSinceLastSent >= DEVICE_MOVING_REPORT_MS;
 
               if (shouldReportStationary || shouldReportMovement) {
+                lastDeviceReportTimeBG = now;
                 const deviceId = await AsyncStorage.getItem(
                   STORAGE_KEYS.DEVICE_ID,
                 );
@@ -174,6 +177,7 @@ TaskManager.defineTask(
                   shouldReportStationary
                     ? "Reporte forzado"
                     : `Reportando ${(distFromLastReport * 1000).toFixed(0)}m`,
+                  `elapsed:${Math.round(elapsedSinceLastSent / 1000)}s`,
                   undefined,
                   "BG-LOC",
                 );
@@ -189,7 +193,23 @@ TaskManager.defineTask(
                   [STORAGE_KEYS.DEVICE_LAST_LAT, latitude.toString()],
                   [STORAGE_KEYS.DEVICE_LAST_LON, longitude.toString()],
                 ]);
+              } else if (now - lastLocatorDiagLogBG >= LOCATOR_DIAG_LOG_MS) {
+                lastLocatorDiagLogBG = now;
+                LogService.log(
+                  "DEBUG",
+                  "Sin reporte BG-LOC",
+                  `dist:${(distFromLastReport * 1000).toFixed(0)}m elapsed:${Math.round(elapsedSinceLastSent / 1000)}s`,
+                  "BG-LOC",
+                );
               }
+            } else if (now - lastLocatorDiagLogBG >= LOCATOR_DIAG_LOG_MS) {
+              lastLocatorDiagLogBG = now;
+              LogService.log(
+                "DEBUG",
+                "Lock BG-LOC activo",
+                `${Math.round((now - lastDeviceReportTimeBG) / 1000)}s desde ultimo intento`,
+                "BG-LOC",
+              );
             }
           }
 
@@ -338,8 +358,18 @@ TaskManager.defineTask(
             }
 
             // Reportar como mínimo cada 10 min aunque no haya movimiento
-            if (now - lastDeviceReportTime < 55_000) return;
-            lastDeviceReportTime = now; // Bloqueo inmediato local
+            if (now - lastDeviceReportTimeLOC < 55_000) {
+              if (now - lastLocatorDiagLogLOC >= LOCATOR_DIAG_LOG_MS) {
+                lastLocatorDiagLogLOC = now;
+                LogService.log(
+                  "DEBUG",
+                  "Lock LOC activo",
+                  `${Math.round((now - lastDeviceReportTimeLOC) / 1000)}s desde ultimo intento`,
+                  "LOC",
+                );
+              }
+              return;
+            }
 
             const lastSentAtStr = await AsyncStorage.getItem(
               STORAGE_KEYS.DEVICE_LAST_SENT,
@@ -369,6 +399,7 @@ TaskManager.defineTask(
               elapsedSinceLastSent >= DEVICE_MOVING_REPORT_MS;
 
             if (shouldReportStationary || shouldReportMovement) {
+              lastDeviceReportTimeLOC = now;
               const deviceId = await AsyncStorage.getItem(
                 STORAGE_KEYS.DEVICE_ID,
               );
@@ -377,7 +408,7 @@ TaskManager.defineTask(
                 shouldReportStationary
                   ? "Reporte forzado por tiempo"
                   : `Reportando cambio (${(distFromLastReport * 1000).toFixed(0)}m)`,
-                `${latitude.toFixed(5)},${longitude.toFixed(5)}`,
+                `${latitude.toFixed(5)},${longitude.toFixed(5)} elapsed:${Math.round(elapsedSinceLastSent / 1000)}s`,
                 "LOC",
               );
 
@@ -398,6 +429,14 @@ TaskManager.defineTask(
                   ? ApiService.drainQueue()
                   : Promise.resolve(),
               ]);
+            } else if (now - lastLocatorDiagLogLOC >= LOCATOR_DIAG_LOG_MS) {
+              lastLocatorDiagLogLOC = now;
+              LogService.log(
+                "DEBUG",
+                "Sin reporte LOC",
+                `dist:${(distFromLastReport * 1000).toFixed(0)}m elapsed:${Math.round(elapsedSinceLastSent / 1000)}s`,
+                "LOC",
+              );
             }
           }
         }
