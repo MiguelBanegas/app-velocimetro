@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "Orion Rastreador",
+    "slug": "orion-rastreador",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "assets/images/icon.png",
+    "scheme": "orionrastreador",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": false,
+    "android": {
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION"
+      ],
+      "package": "com.miguelbanegas.orionrastreador"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Se requiere ubicación para el rastreo silencioso del dispositivo.",
+          "isAndroidBackgroundLocationEnabled": true
+        }
+      ]
+    ]
+  }
+}

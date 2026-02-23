@@ -10,6 +10,7 @@ export interface RoutePoint {
   longitude: number;
   timestamp: number;
   speed: number;
+  altitude?: number | null; // Nueva propiedad opcional para la altitud
 }
 
 export interface Settings {
@@ -19,6 +20,7 @@ export interface Settings {
   beepTone: "beep1" | "beep2" | "beep3";
   customBeepUri?: string; // URI del archivo de audio personalizado
   updateInterval: number; // Intervalo de actualización GPS en ms
+  isLocatorEnabled: boolean; // Indica si el rastreo permanente del dispositivo está activo
 }
 
 export interface DrivingStats {
@@ -28,6 +30,7 @@ export interface DrivingStats {
   stoppedTime: number; // tiempo detenido en segundos (velocidad < 10 km/h)
   routePoints: RoutePoint[]; // Historial de coordenadas
   isBackgroundTracking: boolean;
+  isSyncing?: boolean; // indica si se está enviando/esperando respuesta al servidor
 }
 
 export interface HistoryItem {
@@ -38,5 +41,7 @@ export interface HistoryItem {
   stoppedTime: number;
   distance: number;
   maxSpeed: number;
+  avgSpeed: number;
   routePoints: RoutePoint[];
+  remoteTrackId?: number; // ID del track remoto si fue creado
 }

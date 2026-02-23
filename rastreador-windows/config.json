@@ -1,0 +1,9 @@
+{
+  "device_id": "Notebook-Windows",
+  "interval_seconds": 600,
+  "api_url": "https://api.appvelocidad.mabcontrol.ar/devices/locations",
+  "enabled": false,
+  "use_ip_location": true,
+  "manual_lat": null,
+  "manual_lon": null
+}

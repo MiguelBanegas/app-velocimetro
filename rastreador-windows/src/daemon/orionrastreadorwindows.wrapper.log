@@ -1,0 +1,50 @@
+2026-02-11 18:11:29 - Starting C:\nvm4w\nodejs\node.exe  --harmony --max_old_space_size=4096 C:\Users\pc\Desktop\app-velocidad\rastreador-windows\node_modules\node-windows\lib\wrapper.js --file C:\Users\pc\Desktop\app-velocidad\rastreador-windows\src\service.js --scriptoptions= --log "Orion Rastreador Windows wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-02-11 18:11:29 - Started 7596
+2026-02-11 18:12:49 - Stopping orionrastreadorwindows.exe
+2026-02-11 18:12:49 - ProcessKill 7596
+2026-02-11 18:12:49 - Shutdown exception
+Message:Clase no registrada
+
+Stacktrace:   en System.Runtime.InteropServices.Marshal.ThrowExceptionForHRInternal(Int32 errorCode, IntPtr errorInfo)
+   en System.Management.ManagementScope.InitializeGuts(Object o)
+   en System.Management.ManagementScope.Initialize()
+   en System.Management.ManagementObjectSearcher.Initialize()
+   en System.Management.ManagementObjectSearcher.Get()
+   en winsw.WrapperService.GetChildPids(Int32 pid)
+   en winsw.WrapperService.StopProcessAndChildren(Int32 pid)
+   en winsw.WrapperService.StopIt()
+   en winsw.WrapperService.OnShutdown()
+2026-02-11 18:14:19 - Starting C:\nvm4w\nodejs\node.exe  --harmony --max_old_space_size=4096 C:\Users\pc\Desktop\app-velocidad\rastreador-windows\node_modules\node-windows\lib\wrapper.js --file C:\Users\pc\Desktop\app-velocidad\rastreador-windows\src\service.js --scriptoptions= --log "Orion Rastreador Windows wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-02-11 18:14:20 - Started 6148
+2026-02-15 15:41:39 - Stopping orionrastreadorwindows.exe
+2026-02-15 15:41:39 - ProcessKill 6148
+2026-02-15 15:41:39 - Shutdown exception
+Message:Se está cerrando el sistema.
+
+Stacktrace:   en System.Runtime.InteropServices.Marshal.ThrowExceptionForHRInternal(Int32 errorCode, IntPtr errorInfo)
+   en System.Management.ManagementScope.InitializeGuts(Object o)
+   en System.Management.ManagementScope.Initialize()
+   en System.Management.ManagementObjectSearcher.Initialize()
+   en System.Management.ManagementObjectSearcher.Get()
+   en winsw.WrapperService.GetChildPids(Int32 pid)
+   en winsw.WrapperService.StopProcessAndChildren(Int32 pid)
+   en winsw.WrapperService.StopIt()
+   en winsw.WrapperService.OnShutdown()
+2026-02-15 15:43:16 - Starting C:\nvm4w\nodejs\node.exe  --harmony --max_old_space_size=4096 C:\Users\pc\Desktop\app-velocidad\rastreador-windows\node_modules\node-windows\lib\wrapper.js --file C:\Users\pc\Desktop\app-velocidad\rastreador-windows\src\service.js --scriptoptions= --log "Orion Rastreador Windows wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-02-15 15:43:16 - Started 7460
+2026-02-16 20:42:47 - Stopping orionrastreadorwindows.exe
+2026-02-16 20:42:47 - ProcessKill 7460
+2026-02-16 20:42:47 - Shutdown exception
+Message:Se está cerrando el sistema.
+
+Stacktrace:   en System.Runtime.InteropServices.Marshal.ThrowExceptionForHRInternal(Int32 errorCode, IntPtr errorInfo)
+   en System.Management.ManagementScope.InitializeGuts(Object o)
+   en System.Management.ManagementScope.Initialize()
+   en System.Management.ManagementObjectSearcher.Initialize()
+   en System.Management.ManagementObjectSearcher.Get()
+   en winsw.WrapperService.GetChildPids(Int32 pid)
+   en winsw.WrapperService.StopProcessAndChildren(Int32 pid)
+   en winsw.WrapperService.StopIt()
+   en winsw.WrapperService.OnShutdown()
+2026-02-16 20:43:51 - Starting C:\nvm4w\nodejs\node.exe  --harmony --max_old_space_size=4096 C:\Users\pc\Desktop\app-velocidad\rastreador-windows\node_modules\node-windows\lib\wrapper.js --file C:\Users\pc\Desktop\app-velocidad\rastreador-windows\src\service.js --scriptoptions= --log "Orion Rastreador Windows wrapper" --grow 0.25 --wait 1 --maxrestarts 3 --abortonerror n --stopparentfirst undefined
+2026-02-16 20:43:52 - Started 7176

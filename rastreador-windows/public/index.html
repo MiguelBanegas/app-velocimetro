@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Orion Rastreador Windows</title>
+    <!-- Leaflet CSS -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <style>
+      :root {
+        --primary: #6366f1;
+        --primary-dark: #4f46e5;
+        --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        --card-bg: rgba(30, 41, 59, 0.7);
+        --text-main: #f1f5f9;
+        --text-muted: #94a3b8;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          "Inter",
+          system-ui,
+          -apple-system,
+          sans-serif;
+        background: var(--bg-gradient);
+        color: var(--text-main);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1000px;
+        margin: 0 auto;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 40px;
+      }
+
+      .header h1 {
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        background: linear-gradient(to right, #818cf8, #c084fc);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 800;
+      }
+
+      .header p {
+        color: var(--text-muted);
+        font-size: 1.1em;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+
+      @media (max-width: 800px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .card {
+        background: var(--card-bg);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+      }
+
+      .card-title {
+        font-size: 1.25em;
+        font-weight: 600;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .status-badge {
+        padding: 6px 12px;
+        border-radius: 99px;
+        font-size: 0.8em;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .status-badge.running {
+        background: #10b981;
+        color: white;
+      }
+      .status-badge.stopped {
+        background: #64748b;
+        color: white;
+      }
+      .status-badge.success {
+        background: #10b981;
+        color: white;
+      }
+      .status-badge.error {
+        background: #ef4444;
+        color: white;
+      }
+      .status-badge.pending {
+        background: #f59e0b;
+        color: white;
+      }
+
+      .toggle-btn {
+        width: 100%;
+        padding: 16px;
+        font-size: 1.1em;
+        font-weight: 700;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-top: 20px;
+      }
+
+      .toggle-btn.start {
+        background: var(--primary);
+        color: white;
+      }
+      .toggle-btn.start:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+      }
+      .toggle-btn.stop {
+        background: #ef4444;
+        color: white;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+      .form-group label {
+        display: block;
+        color: var(--text-muted);
+        font-size: 0.9em;
+        margin-bottom: 8px;
+      }
+      .form-group input,
+      .form-group select {
+        width: 100%;
+        padding: 12px;
+        background: rgba(15, 23, 42, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        color: white;
+        font-size: 1em;
+      }
+
+      .btn {
+        padding: 12px 24px;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+      .btn-primary {
+        background: var(--primary);
+        border: none;
+      }
+      .btn-primary:hover {
+        background: var(--primary-dark);
+      }
+
+      #map {
+        height: 400px;
+        width: 100%;
+        border-radius: 15px;
+        margin-top: 15px;
+        border: 2px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .history-upload {
+        border: 2px dashed rgba(255, 255, 255, 0.2);
+        border-radius: 15px;
+        padding: 30px;
+        text-align: center;
+        transition: all 0.3s;
+        cursor: pointer;
+        margin-bottom: 15px;
+      }
+      .history-upload:hover {
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.05);
+      }
+      .history-upload p {
+        color: var(--text-muted);
+      }
+
+      .stats-summary {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 20px;
+      }
+      .stat-mini {
+        background: rgba(15, 23, 42, 0.3);
+        padding: 10px;
+        border-radius: 10px;
+        text-align: center;
+      }
+      .stat-mini .v {
+        font-weight: 700;
+        color: var(--primary);
+        display: block;
+      }
+      .stat-mini .l {
+        font-size: 0.7em;
+        color: var(--text-muted);
+        text-transform: uppercase;
+      }
+
+      #errorAlert {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 9999;
+        background: #ef4444;
+        color: white;
+        padding: 15px 25px;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>ORION TRACKER</h1>
+        <p>Centro de Control Inteligente</p>
+      </div>
+
+      <div id="errorAlert" style="display: none"></div>
+
+      <div class="grid">
+        <!-- Columna Izquierda: Control de Dispositivo -->
+        <div>
+          <div class="card">
+            <div class="card-title">
+              <span>📡 Control de Rastreo</span>
+              <span id="statusBadge" class="status-badge stopped"
+                >Detenido</span
+              >
+            </div>
+
+            <div
+              style="
+                font-size: 0.9em;
+                color: var(--text-muted);
+                margin-bottom: 20px;
+              "
+            >
+              ID:
+              <span id="displayDeviceId" style="color: white">Cargando...</span>
+              | Sincronización:
+              <span id="syncStatus" class="status-badge pending">...</span>
+            </div>
+
+            <button
+              id="toggleBtn"
+              class="toggle-btn start"
+              onclick="toggleTracker()"
+            >
+              Iniciar Rastreo
+            </button>
+            <p
+              id="lastSyncTime"
+              style="
+                font-size: 0.8em;
+                color: var(--text-muted);
+                text-align: center;
+                margin-top: 10px;
+              "
+            ></p>
+          </div>
+
+          <div class="card">
+            <h3 class="card-title">⚙️ Configuración</h3>
+            <div class="form-group">
+              <label>Identificador del Equipo</label>
+              <input type="text" id="deviceId" />
+            </div>
+            <div class="form-group">
+              <label>Intervalo de Reporte (seg)</label>
+              <input type="number" id="intervalSeconds" />
+            </div>
+            <div class="form-group">
+              <label>Método de Localización</label>
+              <select id="locationType" onchange="toggleLocationInputs()">
+                <option value="ip">Geolocalización Automática (IP)</option>
+                <option value="manual">Manual (Coordenadas Fijas)</option>
+              </select>
+            </div>
+            <div id="manualLocationInputs" style="display: none">
+              <div class="grid" style="gap: 10px; margin-bottom: 15px">
+                <div>
+                  <label style="font-size: 0.8em; color: var(--text-muted)"
+                    >Latitud</label
+                  >
+                  <input type="number" id="manualLat" step="0.000001" />
+                </div>
+                <div>
+                  <label style="font-size: 0.8em; color: var(--text-muted)"
+                    >Longitud</label
+                  >
+                  <input type="number" id="manualLon" step="0.000001" />
+                </div>
+              </div>
+            </div>
+            <button
+              class="btn btn-primary"
+              style="width: 100%"
+              onclick="saveConfig()"
+            >
+              Guardar Cambios
+            </button>
+          </div>
+        </div>
+
+        <!-- Columna Derecha: Visualizador de Mapas -->
+        <div>
+          <div class="card" style="padding: 15px">
+            <h3 class="card-title">🗺️ Visualizador de Recorridos</h3>
+            <div
+              class="history-upload"
+              id="dropZone"
+              onclick="document.getElementById('fileInput').click()"
+            >
+              <p>Arrastra aquí tu archivo <b>.json</b> o pulsa para subirlo</p>
+              <input
+                type="file"
+                id="fileInput"
+                accept=".json"
+                style="display: none"
+                onchange="handleFileUpload(event)"
+              />
+            </div>
+
+            <div id="routeStats" style="display: none">
+              <div class="stats-summary">
+                <div class="stat-mini">
+                  <span class="v" id="routeDistance">0 km</span
+                  ><span class="l">Distancia</span>
+                </div>
+                <div class="stat-mini">
+                  <span class="v" id="routeTime">0m</span
+                  ><span class="l">Tiempo</span>
+                </div>
+                <div class="stat-mini">
+                  <span class="v" id="routeMaxSpeed">0 km/h</span
+                  ><span class="l">V. Máx</span>
+                </div>
+              </div>
+            </div>
+
+            <div id="map"></div>
+            <div style="text-align: right; margin-top: 10px">
+              <button class="btn" style="font-size: 0.8em" onclick="clearMap()">
+                Limpiar Mapa
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+      let map, routeLayer, markerStart, markerEnd;
+      let statusInterval;
+
+      // Inicializar Mapa
+      function initMap() {
+        map = L.map("map").setView([-34.6037, -58.3816], 13);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "&copy; OpenStreetMap",
+        }).addTo(map);
+      }
+
+      // Cargar Estado del Servidor
+      async function loadStatus() {
+        try {
+          const response = await fetch("/api/status");
+          const data = await response.json();
+
+          const isRunning = data.isRunning;
+          document.getElementById("statusBadge").textContent = isRunning
+            ? "Activo"
+            : "Detenido";
+          document.getElementById("statusBadge").className =
+            `status-badge ${isRunning ? "running" : "stopped"}`;
+
+          const btn = document.getElementById("toggleBtn");
+          btn.textContent = isRunning
+            ? "DETENER RASTREADOR"
+            : "INICIAR RASTREADOR";
+          btn.className = `toggle-btn ${isRunning ? "stop" : "start"}`;
+
+          document.getElementById("syncStatus").textContent =
+            data.lastSyncStatus;
+          document.getElementById("syncStatus").className =
+            `status-badge ${data.lastSyncStatus}`;
+          document.getElementById("displayDeviceId").textContent =
+            data.config.device_id || "Sin ID";
+
+          if (data.lastSyncTime) {
+            document.getElementById("lastSyncTime").textContent =
+              `Vinc. finalizada: ${new Date(data.lastSyncTime).toLocaleTimeString()}`;
+          }
+
+          // Rellenar inputs solo si están vacíos (para no molestar al usuario)
+          if (
+            !document.activeElement ||
+            (document.activeElement.tagName !== "INPUT" &&
+              document.activeElement.tagName !== "SELECT")
+          ) {
+            document.getElementById("deviceId").value =
+              data.config.device_id || "";
+            document.getElementById("intervalSeconds").value =
+              data.config.interval_seconds || 60;
+            document.getElementById("locationType").value = data.config
+              .use_ip_location
+              ? "ip"
+              : "manual";
+          }
+        } catch (err) {
+          console.error("Status check failed", err);
+        }
+      }
+
+      // Subida de Archivos JSON
+      function handleFileUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          try {
+            const data = JSON.parse(e.target.result);
+            processRouteData(data);
+          } catch (err) {
+            showError("El archivo no es un JSON válido");
+          }
+        };
+        reader.readAsText(file);
+      }
+
+      function processRouteData(data) {
+        // Soporta formatos de HistoryItem o tracks individuales
+        const points =
+          data.routePoints ||
+          data.points ||
+          (Array.isArray(data) ? data : null);
+
+        if (!points || points.length < 2) {
+          showError("El archivo no contiene suficientes puntos de recorrido");
+          return;
+        }
+
+        clearMap();
+
+        const latLngs = points.map((p) => [p.latitude, p.longitude]);
+        routeLayer = L.polyline(latLngs, {
+          color: "#6366f1",
+          weight: 5,
+          opacity: 0.8,
+        }).addTo(map);
+
+        // Marcadores de inicio y fin
+        markerStart = L.circleMarker(latLngs[0], {
+          radius: 8,
+          color: "#10b981",
+          fillOpacity: 1,
+        })
+          .addTo(map)
+          .bindPopup("Inicio");
+        markerEnd = L.circleMarker(latLngs[latLngs.length - 1], {
+          radius: 8,
+          color: "#ef4444",
+          fillOpacity: 1,
+        })
+          .addTo(map)
+          .bindPopup("Fin");
+
+        map.fitBounds(routeLayer.getBounds(), { padding: [30, 30] });
+
+        // Mostrar estadísticas si existen en el JSON
+        if (data.distance) {
+          document.getElementById("routeStats").style.display = "block";
+          document.getElementById("routeDistance").textContent =
+            data.distance.toFixed(2) + " km";
+          document.getElementById("routeMaxSpeed").textContent =
+            (data.maxSpeed || 0).toFixed(1) + " km/h";
+
+          const segs = data.drivingTime || 0;
+          const mins = Math.floor(segs / 60);
+          document.getElementById("routeTime").textContent = mins + "m";
+        }
+      }
+
+      function clearMap() {
+        if (routeLayer) map.removeLayer(routeLayer);
+        if (markerStart) map.removeLayer(markerStart);
+        if (markerEnd) map.removeLayer(markerEnd);
+        document.getElementById("routeStats").style.display = "none";
+      }
+
+      // Lógica de Control (Toggle, Config, etc)
+      async function toggleTracker() {
+        try {
+          const statusResp = await fetch("/api/status");
+          const status = await statusResp.json();
+          const endpoint = status.isRunning ? "/api/stop" : "/api/start";
+          await fetch(endpoint, { method: "POST" });
+          loadStatus();
+        } catch (err) {
+          showError("Error al cambiar estado");
+        }
+      }
+
+      async function saveConfig() {
+        const config = {
+          device_id: document.getElementById("deviceId").value,
+          interval_seconds: parseInt(
+            document.getElementById("intervalSeconds").value,
+          ),
+          use_ip_location:
+            document.getElementById("locationType").value === "ip",
+        };
+        if (!config.use_ip_location) {
+          config.manual_lat = parseFloat(
+            document.getElementById("manualLat").value,
+          );
+          config.manual_lon = parseFloat(
+            document.getElementById("manualLon").value,
+          );
+        }
+
+        const resp = await fetch("/api/config", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(config),
+        });
+        if (resp.ok) alert("Configuración actualizada");
+        else showError("Error al guardar");
+      }
+
+      function toggleLocationInputs() {
+        const type = document.getElementById("locationType").value;
+        document.getElementById("manualLocationInputs").style.display =
+          type === "manual" ? "block" : "none";
+      }
+
+      function showError(msg) {
+        const el = document.getElementById("errorAlert");
+        el.textContent = msg;
+        el.style.display = "block";
+        setTimeout(() => (el.style.display = "none"), 5000);
+      }
+
+      const dropZone = document.getElementById("dropZone");
+      dropZone.ondragover = (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = "#6366f1";
+      };
+      dropZone.ondragleave = (e) => {
+        dropZone.style.borderColor = "rgba(255,255,255,0.2)";
+      };
+      dropZone.ondrop = (e) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            try {
+              processRouteData(JSON.parse(ev.target.result));
+            } catch (err) {
+              showError("JSON Inválido");
+            }
+          };
+          reader.readAsText(file);
+        }
+      };
+
+      initMap();
+      loadStatus();
+      setInterval(loadStatus, 5000);
+    </script>
+  </body>
+</html>
