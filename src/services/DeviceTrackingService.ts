@@ -44,9 +44,15 @@ export const DeviceTrackingService = {
 
     LogService.log("INFO", "Iniciando Localizador Permanente");
     await Location.startLocationUpdatesAsync(BACKGROUND_DEVICE_TRACKING_TASK, {
-      accuracy: Location.Accuracy.Balanced,
-      timeInterval: 60_000,
+      // Más estable en segundo plano que Balanced cuando la app no está en primer plano.
+      accuracy: Location.Accuracy.High,
+      timeInterval: 30_000,
+      // En algunos equipos Android, distanceInterval > 0 evita callbacks estando quieto.
+      // Lo dejamos en 0 para permitir heartbeat por tiempo aun sin movimiento.
       distanceInterval: 0,
+      deferredUpdatesInterval: 60_000,
+      deferredUpdatesDistance: 0,
+      showsBackgroundLocationIndicator: true,
       pausesUpdatesAutomatically: false,
       // Indispensable para que Android no mate el proceso
       foregroundService: {

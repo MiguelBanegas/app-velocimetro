@@ -28,8 +28,7 @@ let lastKnownLon = 0;
 let lastMovementTimestamp = Date.now();
 let isTaskRunningBG = false;
 let isTaskRunningLOC = false;
-let lastDeviceReportTimeBG = 0; // Lock local solo para BG
-let lastDeviceReportTimeLOC = 0; // Lock local solo para LOC
+let lastDeviceReportTimeGlobal = 0; // Lock compartido entre BG y LOC
 let lastLocatorDiagLogBG = 0;
 let lastLocatorDiagLogLOC = 0;
 
@@ -76,17 +75,21 @@ const initializeAlertStates = (thresholds: number[]) => {
 TaskManager.defineTask(
   BACKGROUND_TRACKING_TASK,
   async ({ data, error }: any) => {
-    LogService.setTag("BG");
-    DrivingStatsService.setAsBackgroundProcess();
-    await DrivingStatsService.syncWithStorage();
-
-    if (error) {
-      LogService.log("ERROR", "BT Error", error.message || String(error));
+    if (isTaskRunningBG) {
       return;
     }
+    isTaskRunningBG = true;
+    LogService.setTag("BG");
+    try {
+      DrivingStatsService.setAsBackgroundProcess();
+      await DrivingStatsService.syncWithStorage();
 
-    if (data) {
-      try {
+      if (error) {
+        LogService.log("ERROR", "BT Error", error.message || String(error));
+        return;
+      }
+
+      if (data) {
         const { locations } = data;
         const location = locations[locations.length - 1];
 
@@ -135,7 +138,7 @@ TaskManager.defineTask(
 
           if (settings.isLocatorEnabled) {
             // LOCK LOCAL: Evitar que ráfagas de eventos del OS disparen ráfagas de reportes
-            if (now - lastDeviceReportTimeBG >= 55_000) {
+            if (now - lastDeviceReportTimeGlobal >= 55_000) {
               const lastSentAtStr = await AsyncStorage.getItem(
                 STORAGE_KEYS.DEVICE_LAST_SENT,
               );
@@ -168,7 +171,7 @@ TaskManager.defineTask(
                 elapsedSinceLastSent >= DEVICE_MOVING_REPORT_MS;
 
               if (shouldReportStationary || shouldReportMovement) {
-                lastDeviceReportTimeBG = now;
+                lastDeviceReportTimeGlobal = now;
                 const deviceId = await AsyncStorage.getItem(
                   STORAGE_KEYS.DEVICE_ID,
                 );
@@ -182,17 +185,19 @@ TaskManager.defineTask(
                   "BG-LOC",
                 );
 
-                await ApiService.postDeviceLocation({
-                  device_id: deviceId || "unknown",
-                  lat: latitude,
-                  lon: longitude,
-                });
-
+                // Persistir marca temporal antes de la red evita ráfagas
+                // cuando el SO dispara múltiples runtimes al mismo tiempo.
                 await AsyncStorage.multiSet([
                   [STORAGE_KEYS.DEVICE_LAST_SENT, now.toString()],
                   [STORAGE_KEYS.DEVICE_LAST_LAT, latitude.toString()],
                   [STORAGE_KEYS.DEVICE_LAST_LON, longitude.toString()],
                 ]);
+
+                await ApiService.postDeviceLocation({
+                  device_id: deviceId || "unknown",
+                  lat: latitude,
+                  lon: longitude,
+                });
               } else if (now - lastLocatorDiagLogBG >= LOCATOR_DIAG_LOG_MS) {
                 lastLocatorDiagLogBG = now;
                 LogService.log(
@@ -207,7 +212,7 @@ TaskManager.defineTask(
               LogService.log(
                 "DEBUG",
                 "Lock BG-LOC activo",
-                `${Math.round((now - lastDeviceReportTimeBG) / 1000)}s desde ultimo intento`,
+                `${Math.round((now - lastDeviceReportTimeGlobal) / 1000)}s desde ultimo intento`,
                 "BG-LOC",
               );
             }
@@ -317,9 +322,11 @@ TaskManager.defineTask(
             }
           }
         }
-      } catch (e: any) {
-        LogService.log("ERROR", "Task BG crash", e.message);
       }
+    } catch (e: any) {
+      LogService.log("ERROR", "Task BG crash", e.message);
+    } finally {
+      isTaskRunningBG = false;
     }
   },
 );
@@ -328,13 +335,17 @@ TaskManager.defineTask(
 TaskManager.defineTask(
   BACKGROUND_DEVICE_TRACKING_TASK,
   async ({ data, error }: any) => {
-    LogService.setTag("LOC");
-    if (error) {
-      LogService.log("ERROR", "Loc Task Error", error.message);
+    if (isTaskRunningLOC) {
       return;
     }
-    if (data) {
-      try {
+    isTaskRunningLOC = true;
+    LogService.setTag("LOC");
+    try {
+      if (error) {
+        LogService.log("ERROR", "Loc Task Error", error.message);
+        return;
+      }
+      if (data) {
         const { locations } = data;
         const location = locations[locations.length - 1];
         if (location && location.coords) {
@@ -344,8 +355,6 @@ TaskManager.defineTask(
           const settings = await SettingsService.getSettings();
 
           if (settings.isLocatorEnabled) {
-            const deviceId = await AsyncStorage.getItem(STORAGE_KEYS.DEVICE_ID);
-
             // Heartbeat cada 15 min para el Localizador Permanente (LOC)
             if (now - lastHeartbeatTimeLOC > 900_000) {
               lastHeartbeatTimeLOC = now;
@@ -358,13 +367,13 @@ TaskManager.defineTask(
             }
 
             // Reportar como mínimo cada 10 min aunque no haya movimiento
-            if (now - lastDeviceReportTimeLOC < 55_000) {
+            if (now - lastDeviceReportTimeGlobal < 55_000) {
               if (now - lastLocatorDiagLogLOC >= LOCATOR_DIAG_LOG_MS) {
                 lastLocatorDiagLogLOC = now;
                 LogService.log(
                   "DEBUG",
                   "Lock LOC activo",
-                  `${Math.round((now - lastDeviceReportTimeLOC) / 1000)}s desde ultimo intento`,
+                  `${Math.round((now - lastDeviceReportTimeGlobal) / 1000)}s desde ultimo intento`,
                   "LOC",
                 );
               }
@@ -399,7 +408,7 @@ TaskManager.defineTask(
               elapsedSinceLastSent >= DEVICE_MOVING_REPORT_MS;
 
             if (shouldReportStationary || shouldReportMovement) {
-              lastDeviceReportTimeLOC = now;
+              lastDeviceReportTimeGlobal = now;
               const deviceId = await AsyncStorage.getItem(
                 STORAGE_KEYS.DEVICE_ID,
               );
@@ -412,19 +421,22 @@ TaskManager.defineTask(
                 "LOC",
               );
 
+              // Persistir marca temporal antes de la red evita reportes duplicados
+              // en lotes simultáneos al restaurar la app.
+              await AsyncStorage.multiSet([
+                [STORAGE_KEYS.DEVICE_LAST_SENT, now.toString()],
+                [STORAGE_KEYS.DEVICE_LAST_LAT, latitude.toString()],
+                [STORAGE_KEYS.DEVICE_LAST_LON, longitude.toString()],
+              ]);
+
               await ApiService.postDeviceLocation({
                 device_id: deviceId || "unknown",
                 lat: latitude,
                 lon: longitude,
               });
 
-              // Guardar persistencia
+              // Drenar cola oportunistamente
               await Promise.all([
-                AsyncStorage.multiSet([
-                  [STORAGE_KEYS.DEVICE_LAST_SENT, now.toString()],
-                  [STORAGE_KEYS.DEVICE_LAST_LAT, latitude.toString()],
-                  [STORAGE_KEYS.DEVICE_LAST_LON, longitude.toString()],
-                ]),
                 Math.random() > 0.5
                   ? ApiService.drainQueue()
                   : Promise.resolve(),
@@ -440,11 +452,13 @@ TaskManager.defineTask(
             }
           }
         }
-      } catch (e: any) {
-        LogService.setTag("LOC-BG");
-        LogService.log("ERROR", "Loc Task Crash", e.message);
-        console.error("Loc Task Crash:", e);
       }
+    } catch (e: any) {
+      LogService.setTag("LOC-BG");
+      LogService.log("ERROR", "Loc Task Crash", e.message);
+      console.error("Loc Task Crash:", e);
+    } finally {
+      isTaskRunningLOC = false;
     }
   },
 );
